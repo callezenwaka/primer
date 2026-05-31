@@ -54,6 +54,10 @@ tokio = { version = "1", features = ["full"] }
 inherits = "release"
 lto = "thin"
 
+[package.metadata.wix]
+upgrade-guid = "4D80909B-2F24-41C0-BE38-E3F966041FE0"
+path-guid = "50DE02DB-EE37-4A58-A801-B7D303703C58"
+
 [workspace.metadata.dist]
 cargo-dist-version = "0.32.0"
 ci = ["github"]
