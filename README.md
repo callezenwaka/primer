@@ -315,23 +315,35 @@ When `CI=true` is set (standard on GitHub Actions, CircleCI, etc.) or stdin is n
 
 Override with `PRIMER_CI_MODE=allow-all` to disable blocking (audit-only pipelines).
 
-Use `--format sarif` to emit SARIF 2.1.0 for upload to the GitHub Security tab:
+### GitHub Actions
+
+Use `barestripehq/primer-action@v1` — it installs primer, scans the manifest, uploads SARIF to the GitHub Security tab, and posts a PR comment in one step:
 
 ```yaml
 permissions:
-  security-events: write
+  security-events: write   # SARIF upload
+  pull-requests: write     # PR comments
   actions: read
   contents: read
 
 steps:
   - uses: actions/checkout@v6
-  - name: Install primer
-    run: curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh
-  - name: Scan dependencies
-    run: primer scan --file package-lock.json --format sarif --output results.sarif
-  - uses: github/codeql-action/upload-sarif@v4
+  - uses: barestripehq/primer-action@v1
     with:
-      sarif_file: results.sarif
+      file: package-lock.json
+```
+
+See the [Integrations docs](https://primer.barestripe.com/doc/integrations/) for all inputs and examples.
+
+### Other CI systems (CircleCI, GitLab CI, Jenkins)
+
+Install primer via the installer script and call `--format sarif` to emit SARIF 2.1.0:
+
+```yaml
+- name: Install primer
+  run: curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh
+- name: Scan dependencies
+  run: primer scan --file package-lock.json --format sarif --output results.sarif
 ```
 
 ## Diagnostics
