@@ -1,6 +1,6 @@
 [package]
 name = "primer"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 description = "Pre-install security interceptor for package managers"
 repository = "https://github.com/barestripehq/primer"
