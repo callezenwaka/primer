@@ -99,9 +99,10 @@ pre code {
 }
 
 :not(pre) > code {
-  background: var(--surface);
+  background: #e2e8f0;
   color: var(--ink);
-  padding: 2px 6px;
+  border: 1px solid #d1d9e2;
+  padding: 1px 5px;
   border-radius: 4px;
   font-size: .82rem;
 }
