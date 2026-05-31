@@ -87,6 +87,10 @@ primer scan --file Cargo.lock
 
 # Skip transitive dependencies (direct packages only)
 primer scan --file package.json --direct-only
+
+# Output SARIF 2.1.0 for GitHub Security tab upload
+primer scan --file requirements.txt --format sarif
+primer scan --file package-lock.json --format sarif --output results.sarif
 ```
 
 Each finding shows the patched version when OSV provides one:
@@ -305,11 +309,30 @@ Disabled by default — large projects can have many deps. Cache makes repeat sc
 
 When `CI=true` is set (standard on GitHub Actions, CircleCI, etc.) or stdin is not a TTY, primer switches to non-interactive mode automatically:
 
-- No prompts
+- No prompts — consolidated findings table printed to stderr
 - Blocks on Critical and High findings (exit code `1`)
 - Writes all findings to `primer-report.json` in the working directory
 
 Override with `PRIMER_CI_MODE=allow-all` to disable blocking (audit-only pipelines).
+
+Use `--format sarif` to emit SARIF 2.1.0 for upload to the GitHub Security tab:
+
+```yaml
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+
+steps:
+  - uses: actions/checkout@v6
+  - name: Install primer
+    run: curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh
+  - name: Scan dependencies
+    run: primer scan --file package-lock.json --format sarif --output results.sarif
+  - uses: github/codeql-action/upload-sarif@v4
+    with:
+      sarif_file: results.sarif
+```
 
 ## Diagnostics
 

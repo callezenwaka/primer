@@ -58,13 +58,29 @@ fn is_blocking(label: &str) -> bool {
     is_blocking_at(label, &effective_threshold())
 }
 
+fn severity_rank(label: &str) -> u8 {
+    match label {
+        "CRITICAL" => 0,
+        "HIGH" => 1,
+        "MEDIUM" => 2,
+        "LOW" => 3,
+        _ => 4, // UNSCORED last
+    }
+}
+
+fn sorted_vulns(vulns: &[Vulnerability]) -> Vec<&Vulnerability> {
+    let mut sorted: Vec<&Vulnerability> = vulns.iter().collect();
+    sorted.sort_by_key(|v| severity_rank(v.severity_label()));
+    sorted
+}
+
 fn color_severity(label: &str) -> colored::ColoredString {
     match label {
         "CRITICAL" => label.red().bold(),
         "HIGH" => label.yellow().bold(),
         "MEDIUM" => label.blue().bold(),
         "LOW" => label.green().bold(),
-        _ => label.white().dimmed(),
+        _ => label.white().dimmed(), // UNSCORED and any future unknown values
     }
 }
 
@@ -216,8 +232,9 @@ fn interactive_decision(
     );
     eprintln!();
 
-    // Show top-level CVE list.
-    for v in vulns.iter().take(5) {
+    // Show top-level CVE list sorted CRITICAL → HIGH → MEDIUM → LOW → UNSCORED.
+    let sorted = sorted_vulns(vulns);
+    for v in sorted.iter().take(5) {
         eprintln!("  [{}] {}", color_severity(v.severity_label()), v.id);
         if let Some(s) = &v.summary {
             eprintln!("       {}", s.dimmed());
@@ -268,6 +285,17 @@ fn interactive_decision(
     if proceed {
         Decision::Proceed
     } else {
+        // Show the fix command for the highest-severity blocking vuln that has one.
+        let mut sorted_blocking = blocking.to_vec();
+        sorted_blocking.sort_by_key(|v| severity_rank(v.severity_label()));
+        let fix_hint = sorted_blocking.into_iter().find_map(|v| {
+            v.fixed_version
+                .as_deref()
+                .map(|fv| fix_command(ecosystem, package, fv))
+        });
+        if let Some(cmd) = fix_hint {
+            eprintln!("  Fix:     {}", cmd.green().bold());
+        }
         eprintln!(
             "  Aborted. To bypass: {} {} {}",
             "PRIMER_FORCE=1".dimmed(),
@@ -275,6 +303,88 @@ fn interactive_decision(
             package,
         );
         Decision::Abort
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Audit summary mode (scan --file: collect all findings, print table, no prompts)
+// ---------------------------------------------------------------------------
+
+pub struct AuditFinding {
+    pub package: String,
+    pub ecosystem: String,
+    pub vulns: Vec<Vulnerability>,
+}
+
+/// Print a consolidated findings table and return whether any are blocking.
+/// No interactive prompts — used by `primer scan --file`.
+pub fn audit_summary(findings: &[AuditFinding]) -> Decision {
+    let threshold = effective_threshold();
+    let mut any_blocking = false;
+
+    let has_findings = findings.iter().any(|f| !f.vulns.is_empty());
+    if !has_findings {
+        return Decision::Proceed;
+    }
+
+    eprintln!();
+    for f in findings {
+        if f.vulns.is_empty() {
+            continue;
+        }
+        let blocking_count = f
+            .vulns
+            .iter()
+            .filter(|v| is_blocking_at(v.severity_label(), &threshold))
+            .count();
+        if blocking_count > 0 {
+            any_blocking = true;
+        }
+        eprintln!(
+            "{} {} ({}) — {} {}",
+            "⚠".yellow().bold(),
+            f.package.bold(),
+            f.ecosystem,
+            f.vulns.len(),
+            if f.vulns.len() == 1 {
+                "vulnerability"
+            } else {
+                "vulnerabilities"
+            },
+        );
+        for v in sorted_vulns(&f.vulns) {
+            let blocking_marker = if is_blocking_at(v.severity_label(), &threshold) {
+                " BLOCKS".red().bold().to_string()
+            } else {
+                String::new()
+            };
+            eprintln!(
+                "  [{}]{} {}",
+                color_severity(v.severity_label()),
+                blocking_marker,
+                v.id.bold(),
+            );
+            if let Some(s) = &v.summary {
+                eprintln!("       {}", s.dimmed());
+            }
+            if let Some(fv) = &v.fixed_version {
+                eprintln!(
+                    "       Fix: {}",
+                    fix_command(&f.ecosystem, &f.package, fv).green().bold()
+                );
+            }
+        }
+        eprintln!();
+    }
+
+    if any_blocking {
+        eprintln!(
+            "{} Blocking findings detected. Resolve before proceeding.",
+            "✗".red().bold()
+        );
+        Decision::Abort
+    } else {
+        Decision::Proceed
     }
 }
 
@@ -333,7 +443,7 @@ pub fn report_post_install(package: &str, ecosystem: &str, vulns: &[Vulnerabilit
 
 fn print_findings(package: &str, ecosystem: &str, vulns: &[Vulnerability]) {
     eprintln!("  Security findings for {}:\n", package.bold());
-    for v in vulns {
+    for v in sorted_vulns(vulns) {
         eprintln!("  [{}] {}", color_severity(v.severity_label()), v.id.bold());
         if let Some(s) = &v.summary {
             eprintln!("       {}", s);
@@ -451,7 +561,7 @@ mod tests {
         assert!(is_blocking_at("HIGH", "high"));
         assert!(!is_blocking_at("MEDIUM", "high"));
         assert!(!is_blocking_at("LOW", "high"));
-        assert!(!is_blocking_at("UNKNOWN", "high"));
+        assert!(!is_blocking_at("UNSCORED", "high"));
     }
 
     #[test]

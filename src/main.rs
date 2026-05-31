@@ -5,6 +5,7 @@ mod config;
 mod engine;
 mod lockfile;
 mod manifest;
+mod output;
 mod prompt;
 mod report;
 mod shim;
@@ -66,6 +67,12 @@ enum Commands {
         /// Scan only directly declared packages; skip lockfile transitive deps
         #[arg(long)]
         direct_only: bool,
+        /// Output format: human (default) or sarif — only valid with --file
+        #[arg(long, value_name = "FORMAT", requires = "file")]
+        format: Option<String>,
+        /// Write output to file instead of stdout — only valid with --format sarif
+        #[arg(long, value_name = "FILE", requires = "format")]
+        output: Option<std::path::PathBuf>,
     },
     /// Generate shims and update PATH
     Init,
@@ -274,6 +281,8 @@ async fn main() -> Result<()> {
             verbose,
             ai,
             direct_only,
+            format,
+            output,
         } => {
             // --direct-only flag OR global config key both disable transitive scanning
             let direct_only = direct_only || crate::config::load().unwrap_or_default().direct_only;
@@ -327,7 +336,7 @@ async fn main() -> Result<()> {
                         packages.len(),
                         kind,
                     );
-                    let mut any_blocked = false;
+                    let mut findings: Vec<prompt::AuditFinding> = Vec::new();
                     for (name, version) in &packages {
                         match osv::query(name, eco, version.as_deref(), verbose).await {
                             Ok(vulns) if vulns.is_empty() => {}
@@ -335,19 +344,36 @@ async fn main() -> Result<()> {
                                 if ai {
                                     show_ai_summary(&vulns);
                                 }
-                                if let prompt::Decision::Abort =
-                                    prompt::evaluate(name, eco, &vulns, force)
-                                {
-                                    any_blocked = true;
-                                }
+                                findings.push(prompt::AuditFinding {
+                                    package: name.clone(),
+                                    ecosystem: eco.to_string(),
+                                    vulns,
+                                });
                             }
                             Err(e) => eprintln!("  ⚠ {} scan skipped: {}", name, e),
                         }
                     }
-                    if any_blocked {
-                        std::process::exit(1);
+                    if format.as_deref() == Some("sarif") {
+                        let sarif = output::sarif::build(&findings, filename);
+                        let json_str = serde_json::to_string_pretty(&sarif).unwrap_or_default();
+                        if let Some(out_path) = output {
+                            std::fs::write(&out_path, &json_str).unwrap_or_else(|e| {
+                                eprintln!("⚠ Could not write {}: {}", out_path.display(), e);
+                                std::process::exit(1);
+                            });
+                            println!("SARIF written to {}", out_path.display());
+                        } else {
+                            println!("{}", json_str);
+                        }
+                        if output::sarif::has_blocking(&sarif) {
+                            std::process::exit(1);
+                        }
+                    } else {
+                        if let prompt::Decision::Abort = prompt::audit_summary(&findings) {
+                            std::process::exit(1);
+                        }
+                        println!("✓ Scan complete.");
                     }
-                    println!("✓ Scan complete.");
                 }
             } else {
                 // --- single-package scan ---

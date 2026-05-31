@@ -82,7 +82,7 @@ impl Vulnerability {
             Some(ref s) if s == "HIGH" => "HIGH",
             Some(ref s) if s == "MODERATE" || s == "MEDIUM" => "MEDIUM",
             Some(ref s) if s == "LOW" => "LOW",
-            _ => "UNKNOWN",
+            _ => "UNSCORED",
         }
     }
 }
@@ -255,8 +255,8 @@ mod tests {
     }
 
     #[test]
-    fn severity_none_is_unknown() {
-        assert_eq!(vuln(None).severity_label(), "UNKNOWN");
+    fn severity_none_is_unscored() {
+        assert_eq!(vuln(None).severity_label(), "UNSCORED");
     }
 
     #[test]
@@ -328,7 +328,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn pysec_entries_without_database_specific_show_unknown() {
+    async fn pysec_entries_without_database_specific_show_unscored() {
         let mut server = Server::new_async().await;
         let body = r#"{
             "vulns": [{
@@ -352,7 +352,7 @@ mod tests {
             .unwrap();
         mock.assert_async().await;
 
-        assert_eq!(vulns[0].severity_label(), "UNKNOWN");
+        assert_eq!(vulns[0].severity_label(), "UNSCORED");
     }
 
     #[tokio::test]
