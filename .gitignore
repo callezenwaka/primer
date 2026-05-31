@@ -18,3 +18,5 @@ spec-v*.md
 *-report.json
 
 .bin/
+# Local Netlify folder
+.netlify

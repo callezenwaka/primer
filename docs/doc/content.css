@@ -1,0 +1,223 @@
+/* Typography for primer docs slot content */
+
+body { margin: 0; }
+
+:root {
+  --ink:       #0f172a;   /* headings, pre bg, inline code text */
+  --text:      #374151;   /* body text */
+  --muted:     #64748b;   /* secondary / muted text */
+  --border:    #e2e4ea;   /* borders and dividers */
+  --surface:   #f1f5f9;   /* inline code bg, subtle surfaces */
+  --accent:    #35E0A1;   /* brand mint — links, callout, steps */
+  --accent-dk: #08362A;   /* dark green — text on mint */
+  --dark:      #0F1C21;   /* brand dark — sidebar, code blocks */
+}
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 8px;
+  letter-spacing: -.02em;
+}
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 2rem 0 .75rem;
+}
+
+h3 {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 1.5rem 0 .5rem;
+}
+
+p {
+  margin: 0 0 1rem;
+  color: var(--text);
+  line-height: 1.7;
+  font-size: .9rem;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 1rem;
+  margin: 0 0 2rem;
+}
+
+.page-hero {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+pre {
+  background: var(--ink);
+  border-radius: 8px;
+  padding: 16px 20px;
+  overflow-x: auto;
+  margin: 0 0 1.5rem;
+}
+
+code {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: .82rem;
+}
+
+pre code {
+  color: #e2e8f0;
+  display: block;
+}
+
+:not(pre) > code {
+  background: var(--surface);
+  color: var(--ink);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: .82rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.5rem;
+  font-size: .85rem;
+}
+
+th {
+  background: #f8fafc;
+  color: var(--text);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border);
+}
+
+td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--surface);
+  color: var(--text);
+  vertical-align: top;
+}
+
+tr:last-child td { border-bottom: none; }
+
+.callout {
+  background: #f0fdf9;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 0 0 1.5rem;
+}
+
+.callout p { margin: 0; color: #065f46; font-size: .85rem; }
+
+.callout.warn {
+  background: #fefce8;
+  border-left-color: #ca8a04;
+}
+
+.callout.warn p { color: #854d0e; }
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: .72rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.badge-done     { background: #dcfce7; color: #166534; }
+.badge-planned  { background: var(--surface); color: var(--muted); }
+.badge-wip      { background: #fef9c3; color: #854d0e; }
+
+/* Nav cards grid (overview page) */
+.nav-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0 0 2rem;
+}
+
+.nav-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  text-decoration: none;
+  transition: border-color .15s, box-shadow .15s;
+  display: block;
+}
+
+.nav-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(53,224,161,.15);
+  text-decoration: none;
+}
+
+.nav-card-title {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.nav-card-desc {
+  font-size: .8rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Step list */
+ol.steps {
+  padding-left: 0;
+  list-style: none;
+  counter-reset: step;
+  margin: 0 0 1.5rem;
+}
+
+ol.steps li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 38px;
+  margin-bottom: 14px;
+  font-size: .9rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+ol.steps li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  color: var(--accent-dk);
+  border-radius: 50%;
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .nav-cards { grid-template-columns: 1fr; }
+}

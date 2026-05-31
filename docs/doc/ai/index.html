@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Layer — primer docs</title>
+  <meta name="description" content="Local SLM summaries, model management, and Ollama backend for primer.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="ai">
+
+    <div class="page-hero">
+      <h1>AI Layer</h1>
+      <p class="subtitle">Local SLM summaries — no cloud dependency</p>
+      <p>When the <code>--ai</code> flag is used, primer runs a quantized small language model locally
+         to generate a plain-English summary of each CVE finding. The model runs entirely on your
+         machine — no data leaves your system. If no model is present, primer falls back to
+         displaying raw CVE JSON with no crash.</p>
+    </div>
+
+    <h2>Default model</h2>
+    <table>
+      <thead><tr><th>Property</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Model</td><td>SmolLM2-135M-Instruct</td></tr>
+        <tr><td>Format</td><td>GGUF Q4_K_M (~80 MB)</td></tr>
+        <tr><td>Source</td><td>HuggingFace Hub (public, no account required)</td></tr>
+        <tr><td>Inference engine</td><td>candle (Rust-native, no Python)</td></tr>
+        <tr><td>Hardware acceleration</td><td>Apple Metal (M-series), NVIDIA CUDA, AVX-512</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Quick start</h2>
+    <pre><code>primer model add                   # download default model
+primer scan requests --ecosystem PyPI --ai   # scan with AI summary</code></pre>
+
+    <h2>Model management</h2>
+
+    <h3>Add a model</h3>
+    <pre><code># Download the default model from HuggingFace Hub
+primer model add
+
+# Download a specific model from HF Hub
+primer model add --repo HuggingFaceTB/SmolLM2-135M-Instruct-GGUF --file smollm2-135m-instruct-q4_k_m.gguf
+
+# Import a local GGUF without a network request
+primer model add --from /path/to/model.gguf</code></pre>
+
+    <h3>List models</h3>
+    <pre><code>primer model list</code></pre>
+    <p>Shows each registered model with its absolute path, file size, and whether it is the active model.</p>
+
+    <h3>Set the active model</h3>
+    <pre><code># Local GGUF
+primer model set ~/.primer/models/smollm2.gguf
+
+# Ollama backend
+primer model set ollama:llama3.2
+primer model set ollama:mistral</code></pre>
+    <p>When the backend is <code>ollama</code>, primer skips candle inference and sends the CVE summary
+       prompt to <code>http://localhost:11434/api/generate</code>. Ollama must be running separately.</p>
+
+    <h3>Remove models</h3>
+    <pre><code>primer model remove smollm2.gguf          # remove one model by name
+primer model remove                        # interactive select list
+primer model remove --all                  # remove all models and clear config</code></pre>
+
+    <div class="callout">
+      <p><strong>External paths:</strong> files outside <code>~/.primer/models/</code> (registered via
+         <code>model set &lt;path&gt;</code>) are never deleted — only the config pointer is cleared.
+         Ollama targets have no file on disk; only the config entry is removed.</p>
+    </div>
+
+    <h2>Using AI in scans</h2>
+    <pre><code>primer scan pillow --ecosystem PyPI --ai</code></pre>
+    <p>Appends a ≤3-sentence summary citing the CVE ID before the decision prompt. The system prompt
+       enforces strict CVE citation and JSON output — no hallucination of package names or severity scores.</p>
+
+    <h2>Disabling AI</h2>
+    <pre><code>PRIMER_AI=0 primer scan pillow --ecosystem PyPI</code></pre>
+    <p>Set <code>PRIMER_AI=0</code> in CI pipelines to suppress AI summaries and reduce log noise.
+       Findings are still reported; only the summary is omitted.</p>
+
+    <h2>Config written by model commands</h2>
+    <pre><code># ~/.primer/config.toml after primer model set
+
+# local GGUF:
+[ai]
+backend   = "local"
+model     = "/Users/you/.primer/models/smollm2.gguf"
+tokenizer = "/Users/you/.primer/models/tokenizer.json"
+
+# Ollama:
+[ai]
+backend = "ollama"
+model   = "llama3.2"</code></pre>
+
+    <h2>Build with AI support</h2>
+    <p>Release binaries ship with <code>--features ai</code> compiled in. For development builds:</p>
+    <pre><code>cargo build --release --features ai      # enables candle + Metal/CUDA flags
+cargo build --release --features ai,cuda # explicit CUDA acceleration
+cargo build --release --features ai,metal # explicit Metal acceleration</code></pre>
+
+  </primer-doc-layout>
+</body>
+</html>

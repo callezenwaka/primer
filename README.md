@@ -226,8 +226,8 @@ primer doctor         # check PATH order, shim health, cache state, model state
 Add a package to `.primer-ignore` in the project root to skip the scan without `--force`:
 
 ```sh
-primer allow pillow
-primer allow pillow --ecosystem pypi   # scope to one ecosystem
+primer allow add pillow
+primer allow add pillow --ecosystem pypi   # scope to one ecosystem
 ```
 
 ### Cache

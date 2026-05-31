@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLI Reference — primer docs</title>
+  <meta name="description" content="Every primer command, flag, subcommand, and exit code.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="cli-reference">
+
+    <div class="page-hero">
+      <h1>CLI Reference</h1>
+      <p class="subtitle">Every command, flag, and exit code</p>
+      <p>Commands follow Docker-style conventions: grouped into <strong>Common</strong> and
+         <strong>Management</strong> sections. Run <code>primer --help</code> for a grouped overview,
+         or <code>primer &lt;command&gt; --help</code> for per-command usage.</p>
+    </div>
+
+    <p>Run <code>primer &lt;command&gt; --help</code> for full flag details.</p>
+
+    <h3>Common</h3>
+    <table>
+      <thead>
+        <tr><th>Command</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>primer scan &lt;pkg&gt; --ecosystem &lt;eco&gt;</code></td>
+          <td>Scan a package for known vulnerabilities. Shows "Fixed in:" and a ready-to-run fix command when OSV provides a patched version. Flags: <code>--version</code>, <code>--force</code>, <code>--verbose</code>, <code>--ai</code></td>
+        </tr>
+        <tr>
+          <td><code>primer scan --file &lt;manifest|lockfile&gt;</code></td>
+          <td>Audit all packages in an existing manifest or lockfile. Each vulnerable package shows its fix command. Use <code>--direct-only</code> to skip transitive deps.</td>
+        </tr>
+        <tr>
+          <td><code>primer init</code></td>
+          <td>Generate shims in <code>~/.primer/bin</code> and prepend to <code>$PATH</code></td>
+        </tr>
+        <tr>
+          <td><code>primer info</code></td>
+          <td>Show PATH order, shim health, cache stats, and active model (alias for <code>doctor</code>)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Management</h3>
+    <table>
+      <thead>
+        <tr><th>Command</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>primer allow add &lt;pkg&gt; [--ecosystem]</code></td><td>Add a package to <code>.primer-ignore</code> — scanned but never blocked</td></tr>
+        <tr><td><code>primer allow remove &lt;pkg&gt; [--ecosystem]</code></td><td>Remove a package from the allow-list</td></tr>
+        <tr><td><code>primer allow list</code></td><td>Print all entries in <code>.primer-ignore</code></td></tr>
+        <tr><td><code>primer cache clear</code></td><td>Delete all cached vulnerability results</td></tr>
+        <tr><td><code>primer cache stats</code></td><td>Show entry count, total size on disk, and oldest/newest entry age</td></tr>
+        <tr><td><code>primer config set &lt;key&gt; &lt;value&gt;</code></td><td>Write a value to <code>~/.primer/config.toml</code>. Keys: <code>ai.backend</code>, <code>ai.model</code>, <code>ai.tokenizer</code>, <code>intercept-restore</code>, <code>direct-only</code>, <code>prompt-threshold</code></td></tr>
+        <tr><td><code>primer config get &lt;key&gt;</code></td><td>Read a single config value</td></tr>
+        <tr><td><code>primer config list</code></td><td>Print the full config</td></tr>
+        <tr><td><code>primer model add</code></td><td>Download the default SmolLM2 model from HuggingFace Hub</td></tr>
+        <tr><td><code>primer model add --from &lt;path&gt;</code></td><td>Import a local GGUF file (no network)</td></tr>
+        <tr><td><code>primer model add --repo &lt;repo&gt; --file &lt;file&gt;</code></td><td>Download a specific model from HuggingFace Hub</td></tr>
+        <tr><td><code>primer model list</code></td><td>List registered models with path and file size</td></tr>
+        <tr><td><code>primer model set &lt;target&gt;</code></td><td>Set the active inference target. Local: <code>/path/to/model.gguf</code>. Ollama: <code>ollama:llama3.2</code></td></tr>
+        <tr><td><code>primer model remove</code></td><td>Interactive select list of all managed models — choose one or "Remove all"</td></tr>
+        <tr><td><code>primer model remove &lt;name&gt;...</code></td><td>Remove one or more named models without a prompt</td></tr>
+        <tr><td><code>primer model remove --all</code></td><td>Remove all managed model files and clear config (non-interactive)</td></tr>
+        <tr><td><code>primer hook install</code></td><td>Write <code>.git/hooks/pre-commit</code> to block vulnerable package additions</td></tr>
+        <tr><td><code>primer hook check</code></td><td>Scan staged manifest changes manually (also called by the hook itself)</td></tr>
+        <tr><td><code>primer watch [--directory &lt;path&gt;] [--scan]</code></td><td>Watch manifest files and auto-scan on change. Debounced at 500 ms; exit with <code>Ctrl+C</code></td></tr>
+        <tr><td><code>primer sbom --file &lt;path&gt;</code></td><td>Emit a Software Bill of Materials. <code>--format cyclonedx</code> (default) or <code>--format spdx</code>. <code>--no-scan</code> skips OSV enrichment</td></tr>
+        <tr><td><code>primer mcp</code></td><td>Start an MCP server over stdio for AI agent integration</td></tr>
+        <tr><td><code>primer completions &lt;shell&gt;</code></td><td>Emit a shell completion script. Shells: <code>bash</code>, <code>zsh</code>, <code>fish</code>, <code>powershell</code></td></tr>
+        <tr><td><code>primer uninit [--purge]</code></td><td>Remove shims and <code>$PATH</code> entry. <code>--purge</code> also deletes cache and model files</td></tr>
+      </tbody>
+    </table>
+
+    <hr>
+    <h2>Detailed reference</h2>
+
+    <h3>scan</h3>
+    <p>Scan a package or manifest file against the OSV vulnerability database.</p>
+    <pre><code>primer scan &lt;package&gt; --ecosystem &lt;eco&gt; [--ai] [--force] [--direct-only] [--verbose]
+primer scan --file &lt;manifest&gt;</code></pre>
+    <table>
+      <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--ecosystem</code></td><td>Required for single-package scan. Values: <code>PyPI</code>, <code>npm</code>, <code>Go</code>, <code>Cargo</code>.</td></tr>
+        <tr><td><code>--file &lt;path&gt;</code></td><td>Scan all packages in a manifest or lockfile.</td></tr>
+        <tr><td><code>--ai</code></td><td>Append a local SLM summary to each finding.</td></tr>
+        <tr><td><code>--force</code></td><td>Proceed regardless of findings. Bypasses the prompt.</td></tr>
+        <tr><td><code>--direct-only</code></td><td>Skip transitive dependency scanning for this run.</td></tr>
+        <tr><td><code>--verbose</code></td><td>Show cache hit/miss and fetch source.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>init / uninit</h3>
+    <pre><code>primer init [--no-shell]    # generate shims, update PATH
+primer uninit [--purge]     # remove shims, strip PATH entry</code></pre>
+    <p><code>--no-shell</code> installs shims without modifying any shell rc files.
+       <code>--purge</code> also deletes <code>~/.primer/cache</code> and <code>~/.primer/models</code>.</p>
+
+    <h3>doctor / info</h3>
+    <pre><code>primer doctor    # full health report
+primer info      # alias for doctor</code></pre>
+    <p>Reports: PATH ordering, resolved shim paths, cache size, active AI model, <code>intercept-restore</code> status, active threshold.</p>
+
+    <h3>allow</h3>
+    <p>Manage the per-project allow-list (<code>.primer-ignore</code>). Allowed packages pass through without a prompt.</p>
+    <pre><code>primer allow add &lt;pkg&gt; [--ecosystem &lt;eco&gt;]
+primer allow remove &lt;pkg&gt; [--ecosystem &lt;eco&gt;]
+primer allow list</code></pre>
+
+    <h3>cache</h3>
+    <pre><code>primer cache stats    # entry count, total size, oldest/newest entry
+primer cache clear    # delete all cached scan results</code></pre>
+
+    <h3>config</h3>
+    <pre><code>primer config set &lt;key&gt; &lt;value&gt;
+primer config get &lt;key&gt;
+primer config list</code></pre>
+    <p>Reads and writes <code>~/.primer/config.toml</code>. See <a href="../configuration/">Configuration</a> for all valid keys.</p>
+
+    <h3>model</h3>
+    <pre><code>primer model add                                    # download default model (SmolLM2-135M GGUF)
+primer model add --repo &lt;hf-repo&gt; --file &lt;name&gt;   # download specific model from HF Hub
+primer model add --from &lt;path&gt;                      # import a local GGUF
+primer model list                                   # show registered models with path + size
+primer model set &lt;target&gt;                           # set the active model
+primer model remove [&lt;name&gt;...] [--all]            # remove one, several, or all models</code></pre>
+    <p>Target formats for <code>model set</code>:</p>
+    <table>
+      <thead><tr><th>Command</th><th>Backend</th></tr></thead>
+      <tbody>
+        <tr><td><code>primer model set ~/.primer/models/smollm2.gguf</code></td><td>candle (local)</td></tr>
+        <tr><td><code>primer model set ollama:llama3.2</code></td><td>Ollama HTTP</td></tr>
+        <tr><td><code>primer model set ollama:mistral</code></td><td>Ollama HTTP</td></tr>
+      </tbody>
+    </table>
+
+    <h3>hook</h3>
+    <pre><code>primer hook install    # write .git/hooks/pre-commit in the current repo
+primer hook check      # scan staged manifest changes (also called by the hook)</code></pre>
+    <p>See <a href="../git-hooks/">Git Hooks</a> for full details.</p>
+
+    <h3>sbom</h3>
+    <pre><code>primer sbom --file &lt;manifest&gt; [--output &lt;file&gt;] [--format cyclonedx|spdx] [--no-scan]</code></pre>
+    <p>Generates a Software Bill of Materials. Default format is CycloneDX v1.5 JSON.
+       <code>--no-scan</code> emits a pure inventory without OSV enrichment.</p>
+
+    <h3>watch</h3>
+    <pre><code>primer watch [--directory &lt;path&gt;] [--scan]</code></pre>
+    <p>Monitors manifest files for changes and re-scans on save (500 ms debounce). <code>--scan</code> runs an immediate scan on startup. Exit with <code>Ctrl+C</code>.</p>
+
+    <h3>mcp</h3>
+    <pre><code>primer mcp</code></pre>
+    <p>Starts a Model Context Protocol server over stdio. See <a href="../mcp/">MCP Server</a> for setup.</p>
+
+    <h3>completions</h3>
+    <pre><code>primer completions bash
+primer completions zsh
+primer completions fish
+primer completions powershell</code></pre>
+    <p>Emits a shell completion script. Pipe to your shell's completion directory:</p>
+    <pre><code>primer completions zsh > ~/.zsh/completions/_primer</code></pre>
+
+    <hr>
+    <h2>Exit codes</h2>
+    <table>
+      <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>0</code></td><td>Clean — no findings at or above <code>prompt-threshold</code>.</td></tr>
+        <tr><td><code>1</code></td><td>Blocked — one or more findings met the threshold and the user chose N (or CI mode auto-blocked).</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Environment variables</h2>
+    <table>
+      <thead><tr><th>Variable</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>PRIMER_FORCE=1</code></td><td>Bypass all prompts and proceed regardless of findings. Equivalent to <code>--force</code>.</td></tr>
+        <tr><td><code>PRIMER_AI=0</code></td><td>Disable AI summaries for this invocation. Useful in CI pipelines.</td></tr>
+        <tr><td><code>PRIMER_CI_MODE=allow-all</code></td><td>When <code>CI=true</code>, scan and log findings but never exit 1. Audit-only mode.</td></tr>
+        <tr><td><code>CI=true</code></td><td>Activates non-interactive mode automatically. Detected by most CI platforms.</td></tr>
+      </tbody>
+    </table>
+
+  </primer-doc-layout>
+</body>
+</html>

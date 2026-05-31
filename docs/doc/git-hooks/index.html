@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Git Hooks — primer docs</title>
+  <meta name="description" content="Block commits that add vulnerable packages to manifests using primer hook install.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="git-hooks">
+
+    <div class="page-hero">
+      <h1>Git Hooks</h1>
+      <p class="subtitle">Opt-in local last-resort gate before code reaches CI</p>
+      <p>The primer git hook is a developer convenience — it catches vulnerable package additions
+         at commit time on the developer's machine. It is <em>not</em> a team enforcement layer.
+         For team-wide enforcement, use the GitHub Action (planned M15), which runs for every
+         contributor regardless of local setup.</p>
+    </div>
+
+    <table>
+      <thead><tr><th></th><th>Git Hook</th><th>GitHub Action (M15)</th></tr></thead>
+      <tbody>
+        <tr><td>Runs on</td><td>Developer's machine</td><td>Every contributor, every push</td></tr>
+        <tr><td>Setup</td><td>Opt-in per repo</td><td>One workflow file in the repo</td></tr>
+        <tr><td>Can be bypassed</td><td>Yes — <code>--no-verify</code></td><td>No (blocks merge)</td></tr>
+        <tr><td>Best for</td><td>Fast local feedback</td><td>OSS / team enforcement</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Install</h2>
+    <p>Run once in the root of each repository you want to protect.</p>
+    <pre><code>primer hook install</code></pre>
+    <p>This writes <code>.git/hooks/pre-commit</code> with a one-liner that calls <code>primer hook check</code>.
+       The hook is marked executable automatically. It is idempotent — safe to re-run.</p>
+
+    <h2>What <code>primer hook check</code> does</h2>
+    <ol class="steps">
+      <li>Reads the git staging area (<code>git diff --cached --name-only</code>).</li>
+      <li>Identifies any staged manifest or lockfile from the monitored list.</li>
+      <li>Parses the diff for newly added package entries only.</li>
+      <li>Scans each new package against OSV (<code>--direct-only</code> for speed).</li>
+      <li>Exits <code>1</code> on CRITICAL/HIGH findings, aborting the commit. Exits <code>0</code> on clean.</li>
+    </ol>
+
+    <h2>Monitored files</h2>
+    <table>
+      <thead><tr><th>Ecosystem</th><th>Files watched</th></tr></thead>
+      <tbody>
+        <tr><td>Node.js</td><td><code>package.json</code>, <code>package-lock.json</code>, <code>yarn.lock</code>, <code>pnpm-lock.yaml</code></td></tr>
+        <tr><td>Python</td><td><code>requirements.txt</code>, <code>pyproject.toml</code>, <code>uv.lock</code>, <code>poetry.lock</code></td></tr>
+        <tr><td>Go</td><td><code>go.mod</code>, <code>go.sum</code></td></tr>
+        <tr><td>Rust</td><td><code>Cargo.toml</code>, <code>Cargo.lock</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>Scope:</strong> only changes in the staging area are scanned — not the full project tree.
+         <code>--direct-only</code> keeps pre-commit latency under 1 second on a warm cache.</p>
+    </div>
+
+    <h2>Example output</h2>
+    <p>When the hook blocks a commit:</p>
+    <pre><code>primer: scanning staged manifest changes...
+
+⚠ pillow 9.0.0 (PyPI) — GHSA-56pw-mpj4-fxjw [CRITICAL]
+  Heap buffer overflow in TIFF image parser
+  Fixed in: 9.0.1
+
+primer hook check: 1 blocking finding. Commit aborted.
+  Fix: pip install "pillow>=9.0.1"
+  To bypass: git commit --no-verify</code></pre>
+
+    <h2>Manual run</h2>
+    <pre><code>primer hook check    # scan staged changes without committing</code></pre>
+    <p>Useful for pre-flighting before you reach the commit step.</p>
+
+    <h2>Override</h2>
+    <pre><code>git commit --no-verify           # bypass the hook for a single commit
+PRIMER_FORCE=1 git commit        # equivalent; hook exits 0 regardless of findings</code></pre>
+
+    <div class="callout warn">
+      <p><code>--no-verify</code> bypasses all hooks, not just primer. Use <code>PRIMER_FORCE=1</code> when you
+         want to skip only the primer check while letting other hooks run.</p>
+    </div>
+
+  </primer-doc-layout>
+</body>
+</html>

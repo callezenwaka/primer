@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Integrations — primer docs</title>
+  <meta name="description" content="Wire primer into your workflow: CI/CD, Git hooks, MCP, SBOM, directory watcher, and shim intercept.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="integrations">
+
+    <div class="page-hero">
+      <h1>Integrations</h1>
+      <p class="subtitle">Wire primer into your workflow</p>
+      <p>primer works at multiple layers of a development workflow. Pick the ones that fit your team.</p>
+    </div>
+
+    <h2>1. Shim Intercept — developer machines</h2>
+    <p>The zero-config option. Run <code>primer init</code> once on each developer machine.
+       After that, <code>npm install</code>, <code>pip install</code>, <code>cargo add</code>, and <code>go get</code>
+       are intercepted and scanned transparently — no changes to existing scripts or workflows.</p>
+    <pre><code>primer init</code></pre>
+    <p>Clean installs are silent. Vulnerable ones prompt before anything touches the filesystem.</p>
+    <p><a href="../installation/">Full installation guide →</a></p>
+
+    <hr>
+
+    <h2>2. Git Hook — local last-resort gate</h2>
+    <p>An opt-in pre-commit hook that blocks commits which add vulnerable packages to manifests.
+       Best used alongside the GitHub Action — the hook catches issues before they leave the developer's machine;
+       the Action enforces the same policy for the whole team regardless of local setup.</p>
+    <pre><code>primer hook install    # run once per repo</code></pre>
+    <p>Monitors staged changes to <code>package.json</code>, <code>requirements.txt</code>, <code>go.mod</code>, <code>Cargo.toml</code>, and their lockfiles.</p>
+    <p><a href="../git-hooks/">Full Git Hooks guide →</a></p>
+
+    <hr>
+
+    <h2>3. CI/CD — GitHub Actions</h2>
+    <p>primer auto-detects <code>CI=true</code> and switches to non-interactive mode.
+       Exits with code <code>1</code> on CRITICAL/HIGH findings, <code>0</code> on clean.</p>
+    <pre><code>- name: Install primer
+  run: |
+    curl --proto '=https' --tlsv1.2 -fsSL \
+      https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh
+
+- name: Scan backend dependencies
+  run: primer scan --file backend/pyproject.toml
+
+- name: Scan frontend dependencies
+  run: primer scan --file frontend/package.json</code></pre>
+
+    <p>Findings are written to <code>primer-report.json</code> in the working directory.</p>
+    <table>
+      <thead><tr><th>Variable</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>PRIMER_CI_MODE=allow-all</code></td><td>Scan and log findings but never exit 1 (audit-only).</td></tr>
+        <tr><td><code>PRIMER_AI=0</code></td><td>Disable AI summaries to reduce noise in CI logs.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p>A dedicated <code>callezenwaka/primer-action@v1</code> GitHub Action with PR comments and automatic
+         SARIF upload to the Security tab is planned for M15.</p>
+    </div>
+
+    <hr>
+
+    <h2>4. Directory Watcher — local dev sessions</h2>
+    <p>Runs in the background during a dev session. Re-scans manifest files automatically whenever they change.</p>
+    <pre><code>primer watch --directory . --scan</code></pre>
+    <p>Watches: <code>requirements.txt</code>, <code>pyproject.toml</code>, <code>package.json</code>, <code>go.mod</code>, <code>Cargo.toml</code>.
+       500 ms debounce prevents double-firing on rapid saves. Exit with <code>Ctrl+C</code>.</p>
+    <p><code>--scan</code> triggers an immediate scan of all watched manifests on startup.</p>
+
+    <hr>
+
+    <h2>5. SBOM Generation</h2>
+    <p>Generate a Software Bill of Materials from any manifest or lockfile. Useful for compliance, audits, and supply chain reporting.</p>
+    <pre><code># CycloneDX v1.5 (default)
+primer sbom --file backend/requirements.txt --output sbom-backend.json
+
+# SPDX 2.3
+primer sbom --file frontend/package-lock.json --output sbom-frontend.json --format spdx
+
+# Inventory only — skip OSV enrichment
+primer sbom --file Cargo.toml --no-scan</code></pre>
+    <p>Output is sorted by name → version for deterministic diffs in version control.</p>
+
+    <hr>
+
+    <h2>6. MCP Server — AI coding agents</h2>
+    <p>Exposes a <code>scan_package</code> tool to any MCP-capable AI agent (Claude Code, Cursor, Cline).
+       The agent calls it before suggesting a package install, making the vulnerability check
+       part of its reasoning rather than a post-hoc interception.</p>
+    <pre><code>{
+  "mcpServers": {
+    "primer": {
+      "command": "primer",
+      "args": ["mcp"]
+    }
+  }
+}</code></pre>
+    <p>Add to your project's <code>.mcp.json</code>, or <code>~/.claude/mcp.json</code> for global use.</p>
+    <p><a href="../mcp/">Full MCP Server guide →</a></p>
+
+  </primer-doc-layout>
+</body>
+</html>

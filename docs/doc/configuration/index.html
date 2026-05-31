@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration — primer docs</title>
+  <meta name="description" content="All ~/.primer/config.toml keys explained with defaults and examples.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="configuration">
+
+    <div class="page-hero">
+      <h1>Configuration</h1>
+      <p class="subtitle">All settings live in <code>~/.primer/config.toml</code></p>
+      <p>The file is created on first write. You never need to edit it by hand —
+         use <code>primer config set &lt;key&gt; &lt;value&gt;</code> instead.
+         Keys that are not set use their defaults; <code>primer config list</code>
+         only shows keys you have explicitly changed.</p>
+    </div>
+
+    <h2>Managing config</h2>
+    <pre><code>primer config set prompt-threshold medium   # write a value
+primer config get prompt-threshold          # read one key
+primer config list                          # print all set keys</code></pre>
+
+    <h2>Key reference</h2>
+    <table>
+      <thead>
+        <tr><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>prompt-threshold</code></td>
+          <td>string</td>
+          <td><code>"high"</code></td>
+          <td>Minimum severity that triggers a prompt or CI block. Values: <code>critical</code>, <code>high</code>, <code>medium</code>, <code>low</code>.</td>
+        </tr>
+        <tr>
+          <td><code>intercept-restore</code></td>
+          <td>bool</td>
+          <td><code>false</code></td>
+          <td>When <code>true</code>, bare restore commands (<code>npm install</code> with no args, <code>pip install</code> with no args, <code>go mod download</code>) are scanned against the project manifest before execution.</td>
+        </tr>
+        <tr>
+          <td><code>direct-only</code></td>
+          <td>bool</td>
+          <td><code>false</code></td>
+          <td>Skip transitive dependency scanning. Only direct packages are checked. Useful when scan latency is a concern.</td>
+        </tr>
+        <tr>
+          <td><code>ai.backend</code></td>
+          <td>string</td>
+          <td>—</td>
+          <td>Inference backend: <code>"local"</code> (candle GGUF) or <code>"ollama"</code> (HTTP to <code>localhost:11434</code>).</td>
+        </tr>
+        <tr>
+          <td><code>ai.model</code></td>
+          <td>string</td>
+          <td>—</td>
+          <td>For <code>local</code>: absolute path to a <code>.gguf</code> file. For <code>ollama</code>: model name, e.g. <code>llama3.2</code>.</td>
+        </tr>
+        <tr>
+          <td><code>ai.tokenizer</code></td>
+          <td>string</td>
+          <td>—</td>
+          <td>Absolute path to <code>tokenizer.json</code>. Only used when <code>ai.backend = "local"</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Severity threshold</h2>
+    <p>Controls which findings block an install or CI job.</p>
+    <table>
+      <thead>
+        <tr><th>Value</th><th>Severities that block</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>critical</code></td><td>CRITICAL only</td></tr>
+        <tr><td><code>high</code> (default)</td><td>CRITICAL, HIGH</td></tr>
+        <tr><td><code>medium</code></td><td>CRITICAL, HIGH, MEDIUM</td></tr>
+        <tr><td><code>low</code></td><td>All severities</td></tr>
+      </tbody>
+    </table>
+    <pre><code>primer config set prompt-threshold medium   # block MEDIUM and above
+primer config set prompt-threshold critical # block CRITICAL only</code></pre>
+
+    <h2>Intercept bare restore</h2>
+    <p>Disabled by default to avoid surprising slowdowns. Enable when you want bare <code>npm install</code> or <code>pip install</code> in a project directory to trigger a full manifest scan first.</p>
+    <pre><code>primer config set intercept-restore true</code></pre>
+
+    <h2>AI configuration</h2>
+    <p>Set after running <code>primer model add</code> or <code>primer model set</code> — those commands write these keys automatically. Only edit directly if you are registering an external path or an Ollama target.</p>
+    <pre><code># local GGUF
+primer model set ~/.primer/models/smollm2.gguf
+
+# Ollama
+primer model set ollama:llama3.2</code></pre>
+    <p>Resulting <code>~/.primer/config.toml</code>:</p>
+    <pre><code>[ai]
+backend   = "local"
+model     = "/Users/you/.primer/models/smollm2.gguf"
+tokenizer = "/Users/you/.primer/models/tokenizer.json"</code></pre>
+
+    <h2>Diagnostics</h2>
+    <pre><code>primer doctor      # shows active threshold, intercept-restore status, model path</code></pre>
+
+  </primer-doc-layout>
+</body>
+</html>

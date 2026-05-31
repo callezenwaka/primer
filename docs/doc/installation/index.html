@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Installation — primer docs</title>
+  <meta name="description" content="Install primer, run primer init, and verify shims on macOS, Linux, and Windows.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="installation">
+
+    <div class="page-hero">
+      <h1>Installation</h1>
+      <p class="subtitle">Get primer running in under two minutes</p>
+    </div>
+
+    <h2>Install the binary</h2>
+    <p>The installer detects your OS and architecture, downloads the correct binary, and places it at <code>~/.primer/bin/primer</code>.</p>
+    <pre><code>curl --proto '=https' --tlsv1.2 -fsSL \
+  https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</code></pre>
+
+    <h2>Run <code>primer init</code></h2>
+    <p>This is the only setup step. It generates shims for every detected package manager and prepends <code>~/.primer/bin</code> to your PATH.</p>
+    <pre><code>primer init</code></pre>
+    <p>What <code>primer init</code> does:</p>
+    <ol class="steps">
+      <li>Detects installed package managers (<code>npm</code>, <code>pip</code>, <code>cargo</code>, <code>go</code>, etc.).</li>
+      <li>Generates lightweight shim scripts in <code>~/.primer/bin/</code>.</li>
+      <li>Prepends <code>~/.primer/bin</code> to your shell config — <code>.zshenv</code> for zsh, <code>.bashrc</code> for bash, fish function wrappers for fish.</li>
+    </ol>
+
+    <div class="callout">
+      <p><strong>Non-interactive / Docker:</strong> use <code>primer init --no-shell</code> to install shims without modifying any shell config files.
+      Set <code>ENV PATH="/root/.primer/bin:$PATH"</code> in your Dockerfile instead.</p>
+    </div>
+
+    <h2>Verify</h2>
+    <pre><code>which pip          # → /Users/you/.primer/bin/pip
+primer doctor      # checks PATH order, shim health, cache, model state</code></pre>
+    <p><code>primer doctor</code> (alias: <code>primer info</code>) reports PATH precedence, the resolved path of each shim, cache size, and active AI model.</p>
+
+    <h2>Supported platforms</h2>
+    <table>
+      <thead>
+        <tr><th>Platform</th><th>Architecture</th><th>Installer</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>macOS</td><td>Apple Silicon (aarch64)</td><td>Shell installer / <code>.tar.gz</code></td></tr>
+        <tr><td>macOS</td><td>Intel (x86_64)</td><td>Shell installer / <code>.tar.gz</code></td></tr>
+        <tr><td>Linux</td><td>x86_64</td><td>Shell installer / <code>.tar.gz</code></td></tr>
+        <tr><td>Linux</td><td>ARM64 (aarch64)</td><td>Shell installer / <code>.tar.gz</code></td></tr>
+        <tr><td>Windows</td><td>x86_64</td><td><code>.msi</code> installer (M17, planned)</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Teardown</h2>
+    <p><code>primer uninit</code> reverses every change made by <code>primer init</code>:</p>
+    <pre><code>primer uninit            # remove shims + PATH entry
+primer uninit --purge    # also delete ~/.primer/cache and ~/.primer/models</code></pre>
+
+    <h2>Shell PATH ordering</h2>
+    <p>primer must appear <em>before</em> version managers in <code>$PATH</code>. If <code>nvm</code>, <code>pyenv</code>, <code>asdf</code>, or <code>volta</code> are detected ahead of <code>~/.primer/bin</code>, <code>primer doctor</code> will warn and show the exact reorder instruction.</p>
+
+    <h2>Build from source</h2>
+    <pre><code>git clone https://github.com/barestripehq/primer
+cd primer
+cargo build --release                    # core only
+cargo build --release --features ai     # with local AI summaries</code></pre>
+
+  </primer-doc-layout>
+</body>
+</html>

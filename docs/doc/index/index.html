@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overview — primer docs</title>
+  <meta name="description" content="primer — pre-install security interceptor for package managers.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="index">
+
+    <div class="page-hero">
+      <h1>primer docs</h1>
+      <p class="subtitle">Pre-install security interceptor for package managers</p>
+      <p>primer sits in front of <code>npm</code>, <code>pip</code>, <code>go get</code>, and <code>cargo add</code>.
+         Before any package reaches your system it is checked against the
+         <a href="https://osv.dev">OSV vulnerability database</a>. Clean installs pass through silently.
+         Vulnerable ones are blocked with a prompt and a fix command.</p>
+    </div>
+
+    <h2>Quick start</h2>
+
+    <h3>1 — Install</h3>
+    <pre><code>curl --proto '=https' --tlsv1.2 -fsSL \
+  https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</code></pre>
+
+    <h3>2 — Set up shims</h3>
+    <pre><code>primer init</code></pre>
+
+    <p><a href="../installation/">Full installation guide →</a></p>
+
+    <h2>Supported ecosystems</h2>
+    <table>
+      <thead>
+        <tr><th>Ecosystem</th><th>Package managers</th><th>Available since</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Python</td><td><code>pip</code>, <code>uv</code>, <code>poetry</code></td><td>M2</td></tr>
+        <tr><td>Node.js</td><td><code>npm</code>, <code>yarn</code>, <code>pnpm</code></td><td>M2</td></tr>
+        <tr><td>Go</td><td><code>go get</code>, <code>go mod</code></td><td>M2</td></tr>
+        <tr><td>Rust</td><td><code>cargo add</code></td><td>M2</td></tr>
+      </tbody>
+    </table>
+
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><strong>Intercept</strong> — the shim captures the package name before the real binary runs.</li>
+      <li><strong>Scan</strong> — primer queries OSV and checks the 24 h local cache.</li>
+      <li><strong>Decide</strong> — clean results pass through silently; findings prompt the user with a CVE summary and a ready-to-run fix command.</li>
+      <li><strong>Execute or block</strong> — continue with <code>y</code>, abort with <code>N</code> (exit code 1).</li>
+    </ol>
+
+    <h2>Browse the docs</h2>
+    <div class="nav-cards">
+      <a class="nav-card" href="../configuration/">
+        <div class="nav-card-title">Configuration</div>
+        <div class="nav-card-desc">All <code>~/.primer/config.toml</code> keys explained</div>
+      </a>
+      <a class="nav-card" href="../cli-reference/">
+        <div class="nav-card-title">CLI Reference</div>
+        <div class="nav-card-desc">Every command, flag, and exit code</div>
+      </a>
+      <a class="nav-card" href="../integrations/">
+        <div class="nav-card-title">Integrations</div>
+        <div class="nav-card-desc">CI/CD, Git hooks, MCP, SBOM, and more</div>
+      </a>
+      <a class="nav-card" href="../git-hooks/">
+        <div class="nav-card-title">Git Hooks</div>
+        <div class="nav-card-desc">Block commits that add vulnerable packages</div>
+      </a>
+      <a class="nav-card" href="../ai/">
+        <div class="nav-card-title">AI Layer</div>
+        <div class="nav-card-desc">Local SLM summaries, model management, Ollama</div>
+      </a>
+      <a class="nav-card" href="../mcp/">
+        <div class="nav-card-title">MCP Server</div>
+        <div class="nav-card-desc">Expose <code>scan_package</code> to Claude Code and other agents</div>
+      </a>
+    </div>
+
+  </primer-doc-layout>
+</body>
+</html>

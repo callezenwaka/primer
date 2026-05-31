@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Server — primer docs</title>
+  <meta name="description" content="Expose primer's scan engine as a scan_package MCP tool for Claude Code and other AI agents.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="mcp">
+
+    <div class="page-hero">
+      <h1>MCP Server</h1>
+      <p class="subtitle">Expose <code>scan_package</code> to AI coding agents</p>
+      <p><code>primer mcp</code> starts a <a href="https://modelcontextprotocol.io">Model Context Protocol</a>
+         server over stdio. Any MCP-capable agent — Claude Code, Cursor, Cline — can call
+         <code>scan_package</code> before deciding to install a package, making vulnerability
+         checking part of its reasoning rather than a post-hoc interception.</p>
+    </div>
+
+    <h2>Setup</h2>
+    <p>Add primer to your project's <code>.mcp.json</code>:</p>
+    <pre><code>{
+  "mcpServers": {
+    "primer": {
+      "command": "primer",
+      "args": ["mcp"]
+    }
+  }
+}</code></pre>
+    <p>Or add to <code>~/.claude/mcp.json</code> for global availability across all projects.</p>
+
+    <h2>The <code>scan_package</code> tool</h2>
+
+    <h3>Parameters</h3>
+    <table>
+      <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>string</td><td>yes</td><td>Package name</td></tr>
+        <tr><td><code>ecosystem</code></td><td>string</td><td>yes</td><td><code>PyPI</code>, <code>npm</code>, <code>Go</code>, or <code>crates.io</code></td></tr>
+        <tr><td><code>version</code></td><td>string</td><td>no</td><td>Specific version to check. Omit to check the latest.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Response</h3>
+    <pre><code>{
+  "vulnerabilities": [
+    {
+      "id": "GHSA-56pw-mpj4-fxjw",
+      "severity": "CRITICAL",
+      "summary": "Heap buffer overflow in TIFF image parser",
+      "fixed_version": "9.0.1"
+    }
+  ],
+  "summary": {
+    "blocking": true,
+    "count": 1
+  }
+}</code></pre>
+    <p><code>summary.blocking</code> is <code>true</code> when any finding meets or exceeds the active
+       <code>prompt-threshold</code>. Agents should read this field to decide whether to proceed —
+       do not inspect the <code>vulnerabilities</code> array directly.
+       An empty array with <code>blocking: false</code> means safe to install.</p>
+
+    <h2>How it works</h2>
+    <ul>
+      <li>JSON-RPC 2.0 over stdio — no daemon, no port binding, no new dependencies.</li>
+      <li>Uses primer's OSV scan engine with the same 24 h local cache — repeated agent queries for the same package return instantly.</li>
+      <li>The allow-list (<code>.primer-ignore</code>) is <em>not</em> consulted — MCP is query-only, not an intercept gate.</li>
+      <li>Graceful shutdown on stdin EOF.</li>
+    </ul>
+
+    <h2>Claude Code example</h2>
+    <p>Once configured, Claude Code will call <code>scan_package</code> automatically when deciding whether to install a package:</p>
+    <pre><code>&gt; Install pillow for image processing
+
+[calling scan_package("pillow", "PyPI", "9.0.0")]
+
+scan_package result: CRITICAL — GHSA-56pw-mpj4-fxjw
+  Heap buffer overflow in TIFF image parser
+  Fixed in: 9.0.1
+
+I found a critical vulnerability in pillow 9.0.0. I recommend installing
+the fixed version instead:
+
+pip install "pillow>=9.0.1"</code></pre>
+
+    <h2>Supported MCP methods</h2>
+    <table>
+      <thead><tr><th>Method</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>initialize</code></td><td>MCP handshake with server capabilities</td></tr>
+        <tr><td><code>initialized</code></td><td>Notification (no response required)</td></tr>
+        <tr><td><code>tools/list</code></td><td>Returns <code>scan_package</code> with its JSON Schema</td></tr>
+        <tr><td><code>tools/call</code></td><td>Dispatches <code>scan_package</code> to the OSV engine</td></tr>
+      </tbody>
+    </table>
+
+  </primer-doc-layout>
+</body>
+</html>

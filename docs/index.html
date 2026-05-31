@@ -22,31 +22,38 @@
   <meta name="twitter:description" content="primer scans packages against the OSV vulnerability database before they hit your system.">
 
   <style>
+    :root {
+      --accent:    #35E0A1;   /* brand mint */
+      --accent-dk: #08362A;   /* dark green — text on mint */
+      --dark:      #0F1C21;   /* brand dark — hero, code blocks, footer */
+      --text:      #374151;   /* table / body text */
+      --muted:     #6b7280;   /* secondary text */
+      --faint:     #9ca3af;   /* very muted */
+      --code-text: #e2e8f0;   /* text on dark backgrounds */
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #f9fafb;
-      color: #111827;
+      color: var(--dark);
       line-height: 1.6;
     }
 
     /* ── Hero ── */
     .hero {
-      background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+      background: linear-gradient(135deg, var(--dark) 0%, #162820 100%);
       color: #fff;
       padding: 72px 24px 56px;
       text-align: center;
     }
 
-    .hero-logo {
-      height: 56px;
-      margin-bottom: 16px;
-    }
+    .hero-logo { height: 56px; margin-bottom: 16px; }
 
     .hero p {
       font-size: 1.2rem;
-      color: #9ca3af;
+      color: var(--faint);
       max-width: 560px;
       margin: 0 auto 40px;
     }
@@ -61,19 +68,19 @@
       padding: 14px 20px;
       font-family: "SF Mono", "Fira Code", monospace;
       font-size: 0.9rem;
-      color: #e2e8f0;
+      color: var(--code-text);
       margin-bottom: 32px;
       max-width: 100%;
       overflow-x: auto;
     }
 
-    .install-box .prompt { color: #34d399; -webkit-user-select: none; user-select: none; }
+    .install-box .prompt { color: var(--accent); -webkit-user-select: none; user-select: none; }
 
     .copy-btn {
       background: #374151;
       border: none;
       border-radius: 6px;
-      color: #9ca3af;
+      color: var(--faint);
       cursor: pointer;
       padding: 4px 8px;
       display: inline-flex;
@@ -86,12 +93,7 @@
     .copy-btn svg { pointer-events: none; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
-    .hero-links {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
+    .hero-links { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
 
     .btn {
       display: inline-block;
@@ -104,218 +106,101 @@
     }
 
     .btn:hover { opacity: 0.85; }
-    .btn-primary { background: #34d399; color: #111827; }
-    .btn-outline { border: 1px solid #4b5563; color: #e2e8f0; }
+    .btn-primary { background: var(--accent); color: var(--accent-dk); }
+    .btn-outline  { border: 1px solid #4b5563; color: var(--code-text); }
+
+    /* ── Integrations ── */
+    .integration { margin-bottom: 36px; }
+    .integration:last-child { margin-bottom: 0; }
+
+    .integration-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .integration h3 { font-size: 1.05rem; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+    .integration > p { font-size: 0.9rem; color: var(--muted); margin-bottom: 14px; max-width: 620px; }
 
     /* ── Sections ── */
-    section {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 64px 24px;
-    }
-
+    section { max-width: 860px; margin: 0 auto; padding: 64px 24px; }
     section + section { padding-top: 0; }
-
-    h2 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-bottom: 24px;
-      color: #111827;
-    }
+    h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 24px; color: var(--dark); }
 
     /* ── Flow diagram ── */
     .flow {
-      background: #111827;
+      background: var(--dark);
       border-radius: 12px;
       padding: 28px 32px;
       font-family: "SF Mono", "Fira Code", monospace;
       font-size: 0.88rem;
       line-height: 2;
-      color: #e2e8f0;
+      color: var(--code-text);
       overflow-x: auto;
     }
 
-    .flow .cmd  { color: #34d399; }
-    .flow .step { color: #9ca3af; }
+    .flow .cmd  { color: var(--accent); }
+    .flow .step { color: var(--faint); }
     .flow .bad  { color: #f87171; }
-    .flow .ok   { color: #34d399; }
+    .flow .ok   { color: var(--accent); }
 
     /* ── Cards ── */
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
-    }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
 
-    .card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 24px;
-    }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; }
 
-    .card h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .card h3 svg { color: var(--accent); flex-shrink: 0; }
+    .card p { font-size: 0.9rem; color: var(--muted); }
 
-    .card h3 svg { color: #34d399; flex-shrink: 0; }
-
-    .card p { font-size: 0.9rem; color: #6b7280; }
-
-    .badge {
-      display: inline-block;
-      background: #ecfdf5;
-      color: #065f46;
-      border-radius: 6px;
-      padding: 2px 8px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
+    .badge { display: inline-block; background: #ecfdf5; color: #065f46; border-radius: 6px; padding: 2px 8px; font-size: 0.75rem; font-weight: 600; }
 
     /* ── Code blocks ── */
     .code-block {
-      background: #111827;
+      background: var(--dark);
       border-radius: 10px;
       padding: 20px 24px;
       font-family: "SF Mono", "Fira Code", monospace;
       font-size: 0.85rem;
-      color: #e2e8f0;
+      color: var(--code-text);
       overflow-x: auto;
       line-height: 1.8;
     }
 
-    .code-block .comment { color: #6b7280; }
-    .code-block .cmd     { color: #34d399; }
-
-    /* ── Quick-start steps ── */
-    .steps { display: flex; flex-direction: column; gap: 10px; }
-
-    .step-block {
-      background: #111827;
-      border-radius: 10px;
-      padding: 14px 20px;
-      font-family: "SF Mono", "Fira Code", monospace;
-      font-size: 0.85rem;
-      color: #e2e8f0;
-      overflow-x: auto;
-    }
-
-    .step-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-      color: #6b7280;
-      font-size: 0.8rem;
-    }
-
-    .step-cmd { color: #34d399; line-height: 1.8; }
-    .step-cmd div { white-space: pre; }
+    .code-block .comment { color: var(--muted); }
+    .code-block .cmd     { color: var(--accent); }
 
     /* ── Ecosystem table ── */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.95rem;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
 
-    th {
-      text-align: left;
-      padding: 12px 16px;
-      background: #f3f4f6;
-      border-bottom: 2px solid #e5e7eb;
-      font-weight: 600;
-      color: #374151;
-    }
-
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid #e5e7eb;
-      color: #374151;
-    }
-
-    td code {
-      background: #f3f4f6;
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-family: "SF Mono", "Fira Code", monospace;
-      font-size: 0.85rem;
-    }
-
+    th { text-align: left; padding: 12px 16px; background: #f3f4f6; border-bottom: 2px solid #e5e7eb; font-weight: 600; color: var(--text); }
+    td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: var(--text); }
+    td code { background: #f3f4f6; border-radius: 4px; padding: 2px 6px; font-family: "SF Mono", "Fira Code", monospace; font-size: 0.85rem; }
     tr:last-child td { border-bottom: none; }
 
-    /* ── CLI reference ── */
-    .ref-intro {
-      margin-bottom: 1.5rem;
-      color: #6b7280;
-    }
-
-    .ref-group-heading {
-      margin-bottom: 0.75rem;
-      font-size: 1rem;
-      color: #374151;
-    }
-
-    .ref-table-common {
-      margin-bottom: 2rem;
-    }
-
     /* ── Footer ── */
-    footer {
-      background: #111827;
-      color: #6b7280;
-      text-align: center;
-      padding: 32px 24px;
-      font-size: 0.875rem;
-    }
-
-    footer a { color: #9ca3af; text-decoration: none; }
+    footer { background: var(--dark); color: var(--muted); text-align: center; padding: 32px 24px; font-size: 0.875rem; }
+    footer a { color: var(--faint); text-decoration: none; }
     footer a:hover { color: #fff; }
     .footer-sub { margin-top: 8px; }
 
     /* ── Divider ── */
-    .divider {
-      border: none;
-      border-top: 1px solid #e5e7eb;
-      margin: 0 24px;
-    }
+    .divider { border: none; border-top: 1px solid #e5e7eb; margin: 0 24px; }
 
     /* ── Mobile ── */
     @media (max-width: 640px) {
       .hero { padding: 48px 16px 36px; }
-
       .hero h1 { font-size: 2rem; }
-
       .hero p { font-size: 1rem; margin-bottom: 28px; }
-
-      /* Full-width scrollable install box — never wrap a command mid-URL */
-      .install-box {
-        display: flex;
-        width: 100%;
-        font-size: 0.78rem;
-        padding: 12px 14px;
-      }
-
+      .install-box { display: flex; width: 100%; font-size: 0.78rem; padding: 12px 14px; }
       #install-cmd { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-
       section { padding: 40px 16px; }
-
       h2 { font-size: 1.3rem; }
-
-      .flow, .code-block, .step-block {
-        font-size: 0.78rem;
-        padding: 16px;
-      }
-
-      /* Tables scroll horizontally rather than breaking layout */
+      .flow, .code-block { font-size: 0.78rem; padding: 16px; }
       table { display: block; overflow-x: auto; }
-
-      /* Cards already use auto-fit but enforce single column below 480px */
       .cards { grid-template-columns: 1fr; }
     }
   </style>
@@ -337,7 +222,8 @@
     </div>
 
     <div class="hero-links">
-      <a href="https://github.com/barestripehq/primer" class="btn btn-primary">GitHub</a>
+      <a href="./doc/index/" class="btn btn-primary">Docs</a>
+      <a href="https://github.com/barestripehq/primer" class="btn btn-outline">GitHub</a>
       <a href="https://github.com/barestripehq/primer/releases" class="btn btn-outline">Releases</a>
     </div>
   </header>
@@ -487,242 +373,99 @@
 
   <hr class="divider">
 
-  <!-- Quick start -->
+  <!-- Integrations -->
   <section>
-    <h2>Quick start</h2>
-    <div class="steps">
+    <h2>Integrations</h2>
 
-      <div class="step-block">
-        <div class="step-header">
-          <span># 1. Install</span>
-          <button type="button" class="copy-btn" onclick="copyStep(this)" aria-label="Copy command">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            <span class="sr-only">Copy command</span>
-          </button>
-        </div>
-        <div class="step-cmd">
-          <div data-copy="curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh">curl --proto '=https' --tlsv1.2 -fsSL \
-  https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</div>
-        </div>
+    <div class="integration">
+      <div class="integration-label">CI / CD</div>
+      <h3>GitHub Actions</h3>
+      <p>primer auto-detects <code>CI=true</code> and switches to non-interactive mode. Exits with code <code>1</code> on CRITICAL/HIGH findings. Writes findings to <code>primer-report.json</code>.</p>
+      <div class="code-block">
+        <span class="comment">- name: Install primer</span><br>
+        &nbsp;&nbsp;<span class="cmd">run: |</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">curl --proto '=https' --tlsv1.2 -fsSL \</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</span><br>
+        <br>
+        <span class="comment">- name: Scan backend dependencies</span><br>
+        &nbsp;&nbsp;<span class="cmd">run: primer scan --file backend/pyproject.toml</span><br>
+        <br>
+        <span class="comment">- name: Scan frontend dependencies</span><br>
+        &nbsp;&nbsp;<span class="cmd">run: primer scan --file frontend/package.json</span>
       </div>
-
-      <div class="step-block">
-        <div class="step-header">
-          <span># 2. Set up shims</span>
-          <button type="button" class="copy-btn" onclick="copyStep(this)" aria-label="Copy command">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            <span class="sr-only">Copy command</span>
-          </button>
-        </div>
-        <div class="step-cmd">
-          <div data-copy="primer init">primer init</div>
-        </div>
-      </div>
-
-      <div class="step-block">
-        <div class="step-header">
-          <span># 3. Use your package manager as normal — primer intercepts automatically</span>
-          <button type="button" class="copy-btn" onclick="copyStep(this)" aria-label="Copy command">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            <span class="sr-only">Copy command</span>
-          </button>
-        </div>
-        <div class="step-cmd">
-          <div data-copy="pip install requests&#10;npm install express">pip install requests
-npm install express</div>
-        </div>
-      </div>
-
-      <div class="step-block">
-        <div class="step-header">
-          <span># 4. Optional: enable AI summaries</span>
-          <button type="button" class="copy-btn" onclick="copyStep(this)" aria-label="Copy command">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            <span class="sr-only">Copy command</span>
-          </button>
-        </div>
-        <div class="step-cmd">
-          <div data-copy="primer model add&#10;primer scan pillow --ecosystem pypi --ai">primer model add
-primer scan pillow --ecosystem pypi --ai</div>
-        </div>
-      </div>
-
-      <div class="step-block">
-        <div class="step-header">
-          <span># 5. Optional: block vulnerable commits</span>
-          <button type="button" class="copy-btn" onclick="copyStep(this)" aria-label="Copy command">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            <span class="sr-only">Copy command</span>
-          </button>
-        </div>
-        <div class="step-cmd">
-          <div data-copy="primer hook install">primer hook install</div>
-        </div>
-      </div>
-
-      <div class="step-block">
-        <div class="step-header">
-          <span># 6. Optional: scan on bare restore (npm install, go mod download, …)</span>
-          <button type="button" class="copy-btn" onclick="copyStep(this)" aria-label="Copy command">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-            <span class="sr-only">Copy command</span>
-          </button>
-        </div>
-        <div class="step-cmd">
-          <div data-copy="primer config set intercept-restore true">primer config set intercept-restore true</div>
-        </div>
-      </div>
-
     </div>
-  </section>
 
-  <hr class="divider">
+    <div class="integration">
+      <div class="integration-label">Git Hook</div>
+      <h3>Block vulnerable commits</h3>
+      <p>An opt-in pre-commit hook that scans staged manifest changes before a commit lands. Run once per repo. Works alongside the shim — the hook catches issues at commit time; the shim catches them at install time.</p>
+      <div class="code-block">
+        <span class="comment"># install the hook in the current repo</span><br>
+        <span class="cmd">primer hook install</span><br>
+        <br>
+        <span class="comment"># run the check manually without committing</span><br>
+        <span class="cmd">primer hook check</span>
+      </div>
+    </div>
 
-  <!-- CLI Reference -->
-  <section>
-    <h2>CLI reference</h2>
-    <p class="ref-intro">Run <code>primer &lt;command&gt; --help</code> for full flag details.</p>
+    <div class="integration">
+      <div class="integration-label">AI Agents · MCP</div>
+      <h3>Claude Code, Cursor, Cline</h3>
+      <p>Add primer as an MCP tool so your AI coding agent queries vulnerability data before suggesting a package install. Add to your project's <code>.mcp.json</code>:</p>
+      <div class="code-block">
+        {<br>
+        &nbsp;&nbsp;<span class="cmd">"mcpServers"</span>: {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">"primer"</span>: {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">"command"</span>: <span class="comment">"primer"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">"args"</span>: [<span class="comment">"mcp"</span>]<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
 
-    <h3 class="ref-group-heading">Common</h3>
-    <table class="ref-table-common">
-      <thead>
-        <tr>
-          <th>Command</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>primer scan &lt;pkg&gt; --ecosystem &lt;eco&gt;</code></td>
-          <td>Scan a package for known vulnerabilities. Shows "Fixed in:" and a ready-to-run fix command when OSV provides a patched version. Flags: <code>--version</code>, <code>--force</code>, <code>--verbose</code>, <code>--ai</code></td>
-        </tr>
-        <tr>
-          <td><code>primer scan --file &lt;manifest|lockfile&gt;</code></td>
-          <td>Audit all packages in an existing manifest or lockfile. Each vulnerable package shows its fix command (<code>npm install pkg@fixed</code>, <code>pip install "pkg&gt;=fixed"</code>, etc.). Use <code>--direct-only</code> to skip transitive deps</td>
-        </tr>
-        <tr>
-          <td><code>primer scan --file &lt;path&gt;</code></td>
-          <td>Scan all packages in a manifest or lockfile. Manifests: <code>requirements.txt</code>, <code>pyproject.toml</code>, <code>package.json</code>, <code>go.mod</code>, <code>Cargo.toml</code>. Lockfiles: <code>package-lock.json</code>, <code>yarn.lock</code>, <code>pnpm-lock.yaml</code>, <code>Cargo.lock</code>, <code>go.sum</code>, <code>uv.lock</code>, <code>poetry.lock</code>. Add <code>--direct-only</code> to skip transitive packages.</td>
-        </tr>
-        <tr>
-          <td><code>primer init</code></td>
-          <td>Generate shims in <code>~/.primer/bin</code> and prepend to <code>$PATH</code></td>
-        </tr>
-        <tr>
-          <td><code>primer info</code></td>
-          <td>Show PATH order, shim health, cache stats, and active model (alias for <code>doctor</code>)</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="integration">
+      <div class="integration-label">Shim Intercept</div>
+      <h3>Developer machines</h3>
+      <p>Run <code>primer init</code> once per machine. After that, <code>npm install</code>, <code>pip install</code>, <code>cargo add</code>, and <code>go get</code> are intercepted and scanned transparently — no changes to existing scripts or workflows.</p>
+      <div class="code-block">
+        <span class="comment"># one-time setup</span><br>
+        <span class="cmd">primer init</span><br>
+        <br>
+        <span class="comment"># then use package managers as normal — primer intercepts automatically</span><br>
+        <span class="cmd">pip install requests</span><br>
+        <span class="cmd">npm install express</span>
+      </div>
+    </div>
 
-    <h3 class="ref-group-heading">Management</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Command</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>primer allow add &lt;pkg&gt; [--ecosystem]</code></td>
-          <td>Add a package to <code>.primer-ignore</code> — scanned but never blocked</td>
-        </tr>
-        <tr>
-          <td><code>primer allow remove &lt;pkg&gt; [--ecosystem]</code></td>
-          <td>Remove a package from the allow-list</td>
-        </tr>
-        <tr>
-          <td><code>primer allow list</code></td>
-          <td>Print all entries in <code>.primer-ignore</code></td>
-        </tr>
-        <tr>
-          <td><code>primer cache clear</code></td>
-          <td>Delete all cached vulnerability results</td>
-        </tr>
-        <tr>
-          <td><code>primer cache stats</code></td>
-          <td>Show entry count, total size on disk, and oldest/newest entry age</td>
-        </tr>
-        <tr>
-          <td><code>primer config set &lt;key&gt; &lt;value&gt;</code></td>
-          <td>Write a value to <code>~/.primer/config.toml</code>. Keys: <code>ai.backend</code>, <code>ai.model</code>, <code>ai.tokenizer</code>, <code>intercept-restore</code>, <code>direct-only</code>, <code>prompt-threshold</code></td>
-        </tr>
-        <tr>
-          <td><code>primer config get &lt;key&gt;</code></td>
-          <td>Read a single config value</td>
-        </tr>
-        <tr>
-          <td><code>primer config list</code></td>
-          <td>Print the full config</td>
-        </tr>
-        <tr>
-          <td><code>primer model add</code></td>
-          <td>Download the default SmolLM2 model from HuggingFace Hub</td>
-        </tr>
-        <tr>
-          <td><code>primer model add --from &lt;path&gt;</code></td>
-          <td>Import a local GGUF file (no network)</td>
-        </tr>
-        <tr>
-          <td><code>primer model add --repo &lt;repo&gt; --file &lt;file&gt;</code></td>
-          <td>Download a specific model from HuggingFace Hub</td>
-        </tr>
-        <tr>
-          <td><code>primer model list</code></td>
-          <td>List registered models with path and file size</td>
-        </tr>
-        <tr>
-          <td><code>primer model set &lt;target&gt;</code></td>
-          <td>Set the active inference target. Local: <code>/path/to/model.gguf</code>. Ollama: <code>ollama:llama3.2</code></td>
-        </tr>
-        <tr>
-          <td><code>primer model remove</code></td>
-          <td>Interactive select list of all managed models — choose one or "Remove all"</td>
-        </tr>
-        <tr>
-          <td><code>primer model remove &lt;name&gt;...</code></td>
-          <td>Remove one or more named models without a prompt. Names: filename (<code>smollm2.gguf</code>) or Ollama target (<code>ollama:llama3.2</code>)</td>
-        </tr>
-        <tr>
-          <td><code>primer model remove --all</code></td>
-          <td>Remove all managed model files and clear config (non-interactive)</td>
-        </tr>
-        <tr>
-          <td><code>primer hook install</code></td>
-          <td>Write <code>.git/hooks/pre-commit</code> to block vulnerable package additions</td>
-        </tr>
-        <tr>
-          <td><code>primer hook check</code></td>
-          <td>Scan staged manifest changes manually (also called by the hook itself)</td>
-        </tr>
-        <tr>
-          <td><code>primer watch [--directory &lt;path&gt;] [--scan]</code></td>
-          <td>Watch manifest files and auto-scan on change. <code>--scan</code> runs an immediate scan on startup. Debounced at 500 ms; exit with <code>Ctrl+C</code></td>
-        </tr>
-        <tr>
-          <td><code>primer sbom --file &lt;path&gt;</code></td>
-          <td>Emit a Software Bill of Materials. <code>--format cyclonedx</code> (default) or <code>--format spdx</code>. <code>--output &lt;file&gt;</code> writes to disk. <code>--no-scan</code> skips OSV enrichment</td>
-        </tr>
-        <tr>
-          <td><code>primer mcp</code></td>
-          <td>Start an MCP server over stdio. Add to <code>.mcp.json</code> so AI agents can call <code>scan_package</code> before installing packages</td>
-        </tr>
-        <tr>
-          <td><code>primer completions &lt;shell&gt;</code></td>
-          <td>Emit a shell completion script. Shells: <code>bash</code>, <code>zsh</code>, <code>fish</code>, <code>powershell</code></td>
-        </tr>
-        <tr>
-          <td><code>primer uninit [--purge]</code></td>
-          <td>Remove shims and <code>$PATH</code> entry. <code>--purge</code> also deletes cache and model files</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="integration">
+      <div class="integration-label">Directory Watcher</div>
+      <h3>Live manifest monitoring</h3>
+      <p>Run in the background during a dev session. Re-scans manifest files automatically on save — 500 ms debounce, cross-platform, exits cleanly on <code>Ctrl+C</code>.</p>
+      <div class="code-block">
+        <span class="comment"># watch current directory, scan immediately on startup</span><br>
+        <span class="cmd">primer watch --directory . --scan</span>
+      </div>
+    </div>
+
+    <div class="integration">
+      <div class="integration-label">SBOM</div>
+      <h3>Software Bill of Materials</h3>
+      <p>Generate a machine-readable inventory of all packages in a manifest or lockfile, enriched with OSV vulnerability data. Outputs CycloneDX v1.5 (default) or SPDX 2.3.</p>
+      <div class="code-block">
+        <span class="comment"># CycloneDX (default)</span><br>
+        <span class="cmd">primer sbom --file requirements.txt --output sbom.json</span><br>
+        <br>
+        <span class="comment"># SPDX</span><br>
+        <span class="cmd">primer sbom --file package-lock.json --format spdx --output sbom.json</span>
+      </div>
+    </div>
   </section>
 
   <!-- Footer -->
   <footer>
     <p>
+      <a href="./doc/index/">Docs</a> &nbsp;·&nbsp;
       <a href="https://github.com/barestripehq/primer">GitHub</a> &nbsp;·&nbsp;
       <a href="https://github.com/barestripehq/primer/releases">Releases</a> &nbsp;·&nbsp;
       MIT License
@@ -732,7 +475,7 @@ primer scan pillow --ecosystem pypi --ai</div>
 
   <script>
     const ICON_COPY = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span class="sr-only">Copy command</span>`;
-    const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span class="sr-only">Copied</span>`;
+    const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#35E0A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span class="sr-only">Copied</span>`;
 
     function flashCopied(btn) {
       btn.innerHTML = ICON_CHECK;
