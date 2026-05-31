@@ -384,8 +384,7 @@
       <div class="code-block">
         <span class="comment">- name: Install primer</span><br>
         &nbsp;&nbsp;<span class="cmd">run: |</span><br>
-        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">curl --proto '=https' --tlsv1.2 -fsSL \</span><br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</span><br>
         <br>
         <span class="comment">- name: Scan backend dependencies</span><br>
         &nbsp;&nbsp;<span class="cmd">run: primer scan --file backend/pyproject.toml</span><br>

@@ -45,8 +45,7 @@
        Exits with code <code>1</code> on CRITICAL/HIGH findings, <code>0</code> on clean.</p>
     <pre><code>- name: Install primer
   run: |
-    curl --proto '=https' --tlsv1.2 -fsSL \
-      https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh
+    curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh
 
 - name: Scan backend dependencies
   run: primer scan --file backend/pyproject.toml
@@ -63,10 +62,6 @@
       </tbody>
     </table>
 
-    <div class="callout">
-      <p>A dedicated <code>callezenwaka/primer-action@v1</code> GitHub Action with PR comments and automatic
-         SARIF upload to the Security tab is planned for M15.</p>
-    </div>
 
     <hr>
 

@@ -26,8 +26,7 @@
     <h2>Quick start</h2>
 
     <h3>1 — Install</h3>
-    <pre><code>curl --proto '=https' --tlsv1.2 -fsSL \
-  https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</code></pre>
+    <pre><code>curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</code></pre>
 
     <h3>2 — Set up shims</h3>
     <pre><code>primer init</code></pre>
@@ -37,13 +36,13 @@
     <h2>Supported ecosystems</h2>
     <table>
       <thead>
-        <tr><th>Ecosystem</th><th>Package managers</th><th>Available since</th></tr>
+        <tr><th>Ecosystem</th><th>Intercepted commands</th><th>Manifest / Lockfile</th></tr>
       </thead>
       <tbody>
-        <tr><td>Python</td><td><code>pip</code>, <code>uv</code>, <code>poetry</code></td><td>M2</td></tr>
-        <tr><td>Node.js</td><td><code>npm</code>, <code>yarn</code>, <code>pnpm</code></td><td>M2</td></tr>
-        <tr><td>Go</td><td><code>go get</code>, <code>go mod</code></td><td>M2</td></tr>
-        <tr><td>Rust</td><td><code>cargo add</code></td><td>M2</td></tr>
+        <tr><td>Python</td><td><code>pip</code>, <code>uv</code>, <code>poetry</code></td><td><code>requirements.txt</code>, <code>pyproject.toml</code>, <code>uv.lock</code>, <code>poetry.lock</code></td></tr>
+        <tr><td>Node.js</td><td><code>npm</code>, <code>yarn</code>, <code>pnpm</code></td><td><code>package.json</code>, <code>package-lock.json</code>, <code>yarn.lock</code>, <code>pnpm-lock.yaml</code></td></tr>
+        <tr><td>Go</td><td><code>go get</code>, <code>go mod</code></td><td><code>go.mod</code>, <code>go.sum</code></td></tr>
+        <tr><td>Rust</td><td><code>cargo add</code></td><td><code>Cargo.toml</code>, <code>Cargo.lock</code></td></tr>
       </tbody>
     </table>
 

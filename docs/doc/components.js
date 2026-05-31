@@ -14,6 +14,27 @@ const NAV = [
   { slug: 'mcp',           label: 'MCP Server',     href: '../mcp/' },
 ];
 
+const ICON_COPY = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`;
+const ICON_CHECK = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#35E0A1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+
+function addCopyButtons(root) {
+  root.querySelectorAll('pre:not([data-copy])').forEach(pre => {
+    pre.setAttribute('data-copy', '');
+    const btn = document.createElement('button');
+    btn.className = 'pre-copy-btn';
+    btn.setAttribute('aria-label', 'Copy code');
+    btn.innerHTML = ICON_COPY;
+    btn.addEventListener('click', () => {
+      const text = (pre.querySelector('code') ?? pre).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.innerHTML = ICON_CHECK;
+        setTimeout(() => { btn.innerHTML = ICON_COPY; }, 2000);
+      });
+    });
+    pre.appendChild(btn);
+  });
+}
+
 class PrimerDocLayout extends HTMLElement {
   connectedCallback() {
     const active = this.getAttribute('active') || '';
@@ -30,6 +51,28 @@ class PrimerDocLayout extends HTMLElement {
       return `<a href="${item.href}" class="nav-link${isActive ? ' active' : ''}">${item.label}</a>`;
     }).join('');
 
+    // Compute prev / next from flat page list
+    const PAGES = NAV.filter(item => item.slug);
+    const idx   = PAGES.findIndex(p => p.slug === active);
+    const prev  = idx > 0              ? PAGES[idx - 1] : null;
+    const next  = idx < PAGES.length - 1 ? PAGES[idx + 1] : null;
+
+    const pageNavHTML = (prev || next) ? `
+      <nav class="page-nav">
+        ${prev
+          ? `<a href="${prev.href}" class="page-nav-link page-nav-prev">
+               <span class="page-nav-label">← Previous</span>
+               <span class="page-nav-title">${prev.label}</span>
+             </a>`
+          : `<span></span>`}
+        ${next
+          ? `<a href="${next.href}" class="page-nav-link page-nav-next">
+               <span class="page-nav-label">Next →</span>
+               <span class="page-nav-title">${next.label}</span>
+             </a>`
+          : `<span></span>`}
+      </nav>` : '';
+
     shadow.innerHTML = `
       <style>
         *, *::before, *::after { box-sizing: border-box; }
@@ -44,7 +87,7 @@ class PrimerDocLayout extends HTMLElement {
         }
 
         .sidebar {
-          width: 220px;
+          width: 260px;
           flex-shrink: 0;
           background: var(--dark);
           color: #cbd5e1;
@@ -125,18 +168,61 @@ class PrimerDocLayout extends HTMLElement {
         .content {
           flex: 1;
           overflow: auto;
-          padding: 40px 48px;
+          padding: 48px 64px;
         }
 
-        .page {
-          max-width: 860px;
-          margin: 0 auto;
+        /* ── Prev / Next navigation ── */
+        .page-nav {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          margin-top: 56px;
+          padding-top: 24px;
+          border-top: 1px solid #e2e4ea;
+        }
+
+        .page-nav-link {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 14px 18px;
+          border: 1px solid #e2e4ea;
+          border-radius: 8px;
+          text-decoration: none;
+          min-width: 160px;
+          max-width: 46%;
+          transition: border-color .15s, box-shadow .15s;
+        }
+
+        .page-nav-link:hover {
+          border-color: var(--accent, #35E0A1);
+          box-shadow: 0 2px 8px rgba(53,224,161,.12);
+        }
+
+        .page-nav-next { align-items: flex-end; margin-left: auto; }
+        .page-nav-prev { align-items: flex-start; }
+
+        .page-nav-label {
+          font-size: .68rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: .07em;
+          color: #94a3b8;
+        }
+
+        .page-nav-title {
+          font-size: .88rem;
+          font-weight: 600;
+          color: var(--ink, #0f172a);
         }
 
         @media (max-width: 768px) {
           :host { flex-direction: column; }
           .sidebar { width: 100%; height: auto; position: static; }
           .content { padding: 24px 20px; }
+          .page-nav { flex-direction: column; }
+          .page-nav-link { max-width: 100%; }
+          .page-nav-next { align-items: flex-start; margin-left: 0; }
         }
       </style>
 
@@ -151,11 +237,18 @@ class PrimerDocLayout extends HTMLElement {
       </aside>
 
       <div class="content">
-        <div class="page">
-          <slot></slot>
-        </div>
+        <slot></slot>
+        ${pageNavHTML}
       </div>
     `;
+
+    // Inject copy buttons into all <pre> elements in the slot content
+    const slot = shadow.querySelector('slot');
+    slot.addEventListener('slotchange', () => {
+      slot.assignedElements({ flatten: true }).forEach(el => addCopyButtons(el));
+    });
+    // Also run once for content already in DOM when connectedCallback fires
+    setTimeout(() => addCopyButtons(this), 0);
   }
 }
 

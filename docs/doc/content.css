@@ -61,8 +61,31 @@ pre {
   background: var(--ink);
   border-radius: 8px;
   padding: 16px 20px;
+  padding-right: 48px; /* room for copy button */
   overflow-x: auto;
   margin: 0 0 1.5rem;
+  position: relative;
+}
+
+.pre-copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 5px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 5px 7px;
+  display: flex;
+  align-items: center;
+  transition: background .15s, color .15s;
+  line-height: 0;
+}
+
+.pre-copy-btn:hover {
+  background: rgba(255,255,255,.18);
+  color: #e2e8f0;
 }
 
 code {
@@ -104,6 +127,10 @@ td {
   border-bottom: 1px solid var(--surface);
   color: var(--text);
   vertical-align: top;
+}
+
+td:first-child {
+  white-space: nowrap;
 }
 
 tr:last-child td { border-bottom: none; }

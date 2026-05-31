@@ -19,12 +19,12 @@
       <p class="subtitle">Opt-in local last-resort gate before code reaches CI</p>
       <p>The primer git hook is a developer convenience — it catches vulnerable package additions
          at commit time on the developer's machine. It is <em>not</em> a team enforcement layer.
-         For team-wide enforcement, use the GitHub Action (planned M15), which runs for every
+         For team-wide enforcement, use a GitHub Actions workflow, which runs for every
          contributor regardless of local setup.</p>
     </div>
 
     <table>
-      <thead><tr><th></th><th>Git Hook</th><th>GitHub Action (M15)</th></tr></thead>
+      <thead><tr><th>Aspect</th><th>Git Hook</th><th>GitHub Actions workflow</th></tr></thead>
       <tbody>
         <tr><td>Runs on</td><td>Developer's machine</td><td>Every contributor, every push</td></tr>
         <tr><td>Setup</td><td>Opt-in per repo</td><td>One workflow file in the repo</td></tr>
