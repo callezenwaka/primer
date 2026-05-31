@@ -366,17 +366,11 @@
     <div class="integration">
       <div class="integration-label">CI / CD</div>
       <h3>GitHub Actions</h3>
-      <p>primer auto-detects <code>CI=true</code> and switches to non-interactive mode. Exits with code <code>1</code> on CRITICAL/HIGH findings. Writes findings to <code>primer-report.json</code>.</p>
+      <p>One step to install, scan, upload SARIF to the Security tab, and comment on the PR.</p>
       <div class="code-block">
-        <span class="comment">- name: Install primer</span><br>
-        &nbsp;&nbsp;<span class="cmd">run: |</span><br>
-        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</span><br>
-        <br>
-        <span class="comment">- name: Scan backend dependencies</span><br>
-        &nbsp;&nbsp;<span class="cmd">run: primer scan --file backend/pyproject.toml</span><br>
-        <br>
-        <span class="comment">- name: Scan frontend dependencies</span><br>
-        &nbsp;&nbsp;<span class="cmd">run: primer scan --file frontend/package.json</span>
+        <span class="comment">- uses: barestripehq/primer-action@v1</span><br>
+        &nbsp;&nbsp;<span class="cmd">with:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmd">file: package-lock.json</span>
       </div>
     </div>
 
