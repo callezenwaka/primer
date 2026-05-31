@@ -35,10 +35,19 @@ fn check_path_order(ms_bin: &Path) {
     println!("PATH order");
     println!("----------");
 
-    let path_var = env::var_os("PATH").unwrap_or_default();
-    let dirs: Vec<PathBuf> = env::split_paths(&path_var).collect();
+    // On Windows, read the persistent user PATH from the registry rather than
+    // the process environment, which may not reflect the most recent SETX call.
+    #[cfg(windows)]
+    let path_str = read_user_path_windows().unwrap_or_else(|| env::var("PATH").unwrap_or_default());
+    #[cfg(not(windows))]
+    let path_str = env::var("PATH").unwrap_or_default();
 
-    let ms_pos = dirs.iter().position(|d| d == ms_bin);
+    let dirs: Vec<PathBuf> = env::split_paths(&std::ffi::OsStr::new(&path_str)).collect();
+    let ms_bin_str = ms_bin.to_string_lossy().to_lowercase();
+
+    let ms_pos = dirs
+        .iter()
+        .position(|d| d.to_string_lossy().to_lowercase() == ms_bin_str);
     let vm_positions: Vec<(&str, usize)> = VERSION_MANAGERS
         .iter()
         .filter_map(|vm| {
@@ -48,10 +57,15 @@ fn check_path_order(ms_bin: &Path) {
         })
         .collect();
 
+    #[cfg(not(windows))]
+    let bin_display = "~/.primer/bin";
+    #[cfg(windows)]
+    let bin_display = "%USERPROFILE%\\.primer\\bin";
+
     match ms_pos {
-        None => println!("  ✗ ~/.primer/bin not found in PATH — run `primer init`"),
+        None => println!("  ✗ {} not found in PATH — run `primer init`", bin_display),
         Some(pos) => {
-            println!("  ✓ ~/.primer/bin at position {}", pos);
+            println!("  ✓ {} at position {}", bin_display, pos);
             for (vm, vm_pos) in &vm_positions {
                 if *vm_pos < pos {
                     println!(
@@ -64,6 +78,30 @@ fn check_path_order(ms_bin: &Path) {
             }
         }
     }
+}
+
+#[cfg(windows)]
+fn read_user_path_windows() -> Option<String> {
+    // Read HKCU\Environment\PATH via `reg query`.
+    let output = std::process::Command::new("reg")
+        .args(["query", "HKCU\\Environment", "/v", "PATH"])
+        .output()
+        .ok()?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Output format: "    PATH    REG_SZ    <value>" or REG_EXPAND_SZ
+    for line in stdout.lines() {
+        let trimmed = line.trim();
+        if trimmed.to_uppercase().starts_with("PATH") {
+            // Split on REG_SZ or REG_EXPAND_SZ then take what follows.
+            if let Some(pos) = trimmed.find("REG_SZ") {
+                return Some(trimmed[pos + "REG_SZ".len()..].trim().to_string());
+            }
+            if let Some(pos) = trimmed.find("REG_EXPAND_SZ") {
+                return Some(trimmed[pos + "REG_EXPAND_SZ".len()..].trim().to_string());
+            }
+        }
+    }
+    None
 }
 
 // ---------------------------------------------------------------------------
@@ -317,6 +355,5 @@ fn walk_dir_stats(dir: &Path) -> (usize, u64) {
 }
 
 fn primer_bin_dir() -> PathBuf {
-    let home = env::var("HOME").unwrap_or_else(|_| "/tmp".into());
-    PathBuf::from(home).join(".primer").join("bin")
+    crate::home::primer_bin_dir()
 }

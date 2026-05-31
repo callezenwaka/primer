@@ -8,8 +8,7 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------------------------------------------------
 
 pub fn config_dir() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".into());
-    PathBuf::from(home).join(".primer")
+    crate::home::primer_dir()
 }
 
 pub fn config_path() -> PathBuf {

@@ -3,6 +3,7 @@ mod cache;
 mod cli;
 mod config;
 mod engine;
+mod home;
 mod lockfile;
 mod manifest;
 mod output;
@@ -275,7 +276,25 @@ impl Ecosystem {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Check if we are being invoked as a PM shim (e.g. argv[0] == "pip").
+    // Windows: .cmd wrappers call primer-shim.exe with PM name as argv[1].
+    // Detect by checking whether argv[0] stem is "primer-shim".
+    #[cfg(windows)]
+    {
+        let args: Vec<String> = std::env::args().collect();
+        let exe_stem = std::path::Path::new(args.first().map(String::as_str).unwrap_or(""))
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("");
+        if exe_stem.eq_ignore_ascii_case("primer-shim") {
+            if let Some(pm_name) = args.get(1) {
+                if let Some(pm) = shim::PackageManager::from_argv0(pm_name) {
+                    return shim::run(pm, args[2..].to_vec()).await;
+                }
+            }
+        }
+    }
+
+    // Unix: shims are symlinks — argv[0] is the PM name.
     let argv0 = std::env::args().next().unwrap_or_default();
     if let Some(pm) = shim::PackageManager::from_argv0(&argv0) {
         let args: Vec<String> = std::env::args().skip(1).collect();

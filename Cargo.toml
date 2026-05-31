@@ -56,7 +56,7 @@ lto = "thin"
 [workspace.metadata.dist]
 cargo-dist-version = "0.32.0"
 ci = ["github"]
-installers = ["shell", "powershell"]
+installers = ["shell", "powershell", "msi"]
 targets = [
   "aarch64-apple-darwin",
   "x86_64-apple-darwin",

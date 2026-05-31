@@ -32,17 +32,24 @@ pip install pillow
 
 ## Installation
 
+**macOS / Linux**
+
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh
-```
-
-Then run once to set up shims:
-
-```sh
 primer init
 ```
 
-This creates shims in `~/.primer/bin` and prepends it to your shell config (`.zshenv` for zsh, `.bashrc` for bash, fish function for fish). Restart your shell or `source` the config file.
+`primer init` creates shims in `~/.primer/bin` and prepends it to your shell config (`.zshenv` for zsh, `.bashrc` for bash, fish function for fish). Restart your shell or `source` the config file.
+
+**Windows**
+
+Download the MSI installer from the [latest release](https://github.com/barestripehq/primer/releases/latest), then run in a new terminal:
+
+```powershell
+primer init
+```
+
+`primer init` creates `.cmd` wrappers in `%USERPROFILE%\.primer\bin`, updates user PATH via `SETX`, and injects into your PowerShell 7 profile. Open a new terminal for changes to take effect.
 
 **From source:**
 

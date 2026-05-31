@@ -1,4 +1,3 @@
-use std::env;
 use std::fs;
 use std::path::PathBuf;
 
@@ -13,14 +12,28 @@ pub fn run(purge: bool) -> Result<()> {
 
     let ms_bin = primer_bin_dir();
 
-    // Remove individual shim symlinks.
+    // Remove shims (symlinks on Unix, .cmd wrappers on Windows).
     let mut removed = 0;
     for pm in PackageManager::all() {
+        #[cfg(windows)]
+        let shim = ms_bin.join(pm.name()).with_extension("cmd");
+        #[cfg(not(windows))]
         let shim = ms_bin.join(pm.name());
+
         if shim.exists() || shim.symlink_metadata().is_ok() {
             fs::remove_file(&shim)?;
             println!("  ✓ Removed {}", shim.display());
             removed += 1;
+        }
+    }
+
+    // On Windows also remove primer-shim.exe.
+    #[cfg(windows)]
+    {
+        let shim_exe = ms_bin.join("primer-shim.exe");
+        if shim_exe.exists() {
+            fs::remove_file(&shim_exe)?;
+            println!("  ✓ Removed {}", shim_exe.display());
         }
     }
 
@@ -44,31 +57,85 @@ pub fn run(purge: bool) -> Result<()> {
         }
     }
 
+    #[cfg(not(windows))]
     println!("\nDone. Restart your shell to complete removal.");
+    #[cfg(windows)]
+    println!("\nDone. Open a new terminal for PATH changes to take effect.");
+
     Ok(())
 }
 
 fn remove_path_lines() -> Result<()> {
-    let home = env::var("HOME").unwrap_or_else(|_| "/tmp".into());
-    let home = PathBuf::from(&home);
+    #[cfg(windows)]
+    return remove_path_lines_windows();
 
-    let candidates = [
-        ".zshenv",
-        ".zshrc",
-        ".bashrc",
-        ".bash_profile",
-        ".config/fish/config.fish",
-    ];
+    #[cfg(not(windows))]
+    {
+        let home = crate::home::home_dir();
 
-    for file in &candidates {
-        let path = home.join(file);
-        if !path.exists() {
-            continue;
+        let candidates = [
+            ".zshenv",
+            ".zshrc",
+            ".bashrc",
+            ".bash_profile",
+            ".config/fish/config.fish",
+        ];
+
+        for file in &candidates {
+            let path = home.join(file);
+            if !path.exists() {
+                continue;
+            }
+            match strip_marker_block(&path) {
+                Ok(true) => println!("  ✓ Cleaned {}", path.display()),
+                Ok(false) => {}
+                Err(e) => println!("  ✗ Could not clean {}: {}", path.display(), e),
+            }
         }
-        match strip_marker_block(&path) {
-            Ok(true) => println!("  ✓ Cleaned {}", path.display()),
+
+        Ok(())
+    }
+}
+
+#[cfg(windows)]
+fn remove_path_lines_windows() -> Result<()> {
+    let ms_bin = primer_bin_dir();
+    let bin_str = ms_bin.to_string_lossy().to_string();
+
+    // 1. Strip from current user PATH via SETX.
+    let current_path = std::env::var("PATH").unwrap_or_default();
+    let new_path: String = current_path
+        .split(';')
+        .filter(|p| !p.eq_ignore_ascii_case(&bin_str))
+        .collect::<Vec<_>>()
+        .join(";");
+
+    if new_path != current_path {
+        let status = std::process::Command::new("setx")
+            .args(["PATH", &new_path])
+            .status();
+        match status {
+            Ok(s) if s.success() => println!("  ✓ Removed {} from user PATH", bin_str),
+            _ => println!(
+                "  ✗ Could not update PATH via SETX — remove {} manually",
+                bin_str
+            ),
+        }
+    } else {
+        println!("  · {} was not in PATH", bin_str);
+    }
+
+    // 2. Strip # primer block from PowerShell profile.
+    let home = crate::home::home_dir();
+    let profile = home
+        .join("Documents")
+        .join("PowerShell")
+        .join("Microsoft.PowerShell_profile.ps1");
+    if profile.exists() {
+        match strip_marker_block(&profile) {
+            Ok(true) => println!("  ✓ Cleaned PowerShell profile ({})", profile.display()),
             Ok(false) => {}
-            Err(e) => println!("  ✗ Could not clean {}: {}", path.display(), e),
+            Err(e) => println!("  ✗ Could not clean PowerShell profile: {}", e),
         }
     }
 
@@ -105,8 +172,7 @@ fn strip_marker_block(path: &std::path::Path) -> Result<bool> {
 }
 
 fn primer_bin_dir() -> PathBuf {
-    let home = env::var("HOME").unwrap_or_else(|_| "/tmp".into());
-    PathBuf::from(home).join(".primer").join("bin")
+    crate::home::primer_bin_dir()
 }
 
 #[cfg(test)]

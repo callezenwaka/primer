@@ -14,8 +14,7 @@ struct CacheEntry {
 }
 
 pub fn cache_dir() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".into());
-    PathBuf::from(home).join(".primer").join("cache")
+    crate::home::primer_dir().join("cache")
 }
 
 fn entry_path(dir: &Path, package: &str, ecosystem: &str, version: Option<&str>) -> PathBuf {

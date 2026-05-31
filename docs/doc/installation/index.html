@@ -43,6 +43,26 @@
 primer doctor      # checks PATH order, shim health, cache, model state</code></pre>
     <p><code>primer doctor</code> (alias: <code>primer info</code>) reports PATH precedence, the resolved path of each shim, cache size, and active AI model.</p>
 
+    <h2>Windows</h2>
+    <p>Download and run the MSI installer from the <a href="https://github.com/barestripehq/primer/releases/latest">latest release</a>.
+       It places <code>primer.exe</code> in <code>%USERPROFILE%\.primer\bin</code> and registers it in your user PATH automatically.</p>
+    <p>Then run once in a new terminal to set up shims:</p>
+    <pre><code>primer init</code></pre>
+    <p>What <code>primer init</code> does on Windows:</p>
+    <ol class="steps">
+      <li>Detects installed package managers (<code>npm</code>, <code>pip</code>, <code>cargo</code>, <code>go</code>, etc.).</li>
+      <li>Creates <code>.cmd</code> wrappers in <code>%USERPROFILE%\.primer\bin\</code> (e.g. <code>npm.cmd</code>, <code>pip.cmd</code>).</li>
+      <li>Updates user PATH via <code>SETX</code> so wrappers take precedence.</li>
+      <li>Injects <code>$env:PATH</code> update into your PowerShell 7 profile.</li>
+    </ol>
+    <p>To verify:</p>
+    <pre><code>where npm          # → C:\Users\you\.primer\bin\npm.cmd
+primer doctor      # checks PATH order and shim health</code></pre>
+
+    <div class="callout">
+      <p><strong>Git hooks on Windows:</strong> the pre-commit hook script requires Git Bash or a POSIX-compatible shell. It works out of the box for developers using Git for Windows.</p>
+    </div>
+
     <h2>Supported platforms</h2>
     <table>
       <thead>
@@ -53,6 +73,7 @@ primer doctor      # checks PATH order, shim health, cache, model state</code></
         <tr><td>macOS</td><td>Intel (x86_64)</td><td>Shell installer / <code>.tar.gz</code></td></tr>
         <tr><td>Linux</td><td>x86_64</td><td>Shell installer / <code>.tar.gz</code></td></tr>
         <tr><td>Linux</td><td>ARM64 (aarch64)</td><td>Shell installer / <code>.tar.gz</code></td></tr>
+        <tr><td>Windows</td><td>x86_64</td><td>MSI installer / PowerShell installer</td></tr>
       </tbody>
     </table>
 

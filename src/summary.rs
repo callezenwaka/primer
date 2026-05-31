@@ -13,8 +13,7 @@ use crate::engine::osv::Vulnerability;
 // ---------------------------------------------------------------------------
 
 pub fn models_dir() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".into());
-    PathBuf::from(home).join(".primer").join("models")
+    crate::home::primer_dir().join("models")
 }
 
 pub fn default_model_path() -> PathBuf {

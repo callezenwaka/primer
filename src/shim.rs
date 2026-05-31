@@ -165,8 +165,7 @@ fn parse_package_spec(pm: &PackageManager, spec: &str) -> PackageArg {
 // ---------------------------------------------------------------------------
 
 fn primer_bin_dir() -> PathBuf {
-    let home = env::var("HOME").unwrap_or_else(|_| "/tmp".into());
-    PathBuf::from(home).join(".primer").join("bin")
+    crate::home::primer_bin_dir()
 }
 
 /// Find the real PM binary, excluding ~/.primer/bin to avoid loops.
@@ -181,6 +180,14 @@ pub fn find_real_binary(name: &str) -> Option<PathBuf> {
         let candidate = dir.join(name);
         if candidate.is_file() {
             return Some(candidate);
+        }
+        // On Windows, also try name.exe and skip .cmd wrappers in primer's own bin dir.
+        #[cfg(windows)]
+        {
+            let exe_candidate = dir.join(format!("{}.exe", name));
+            if exe_candidate.is_file() {
+                return Some(exe_candidate);
+            }
         }
     }
     None
