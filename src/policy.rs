@@ -67,10 +67,19 @@ pub struct PolicyDecision {
 // ---------------------------------------------------------------------------
 
 pub fn load() -> PolicyFile {
-    let path = std::env::current_dir()
-        .unwrap_or_default()
-        .join(".primer-policy.toml");
-    load_from(&path).unwrap_or_default()
+    let cwd = std::env::current_dir().unwrap_or_default();
+    // .primer/policy.toml takes priority over .primer-policy.toml.
+    let new_path = cwd.join(".primer").join("policy.toml");
+    if new_path.exists() {
+        return load_from(&new_path).unwrap_or_default();
+    }
+    let old_path = cwd.join(".primer-policy.toml");
+    if old_path.exists() {
+        eprintln!(
+            "⚠  .primer-policy.toml is deprecated; run `primer migrate` to move it to .primer/policy.toml"
+        );
+    }
+    load_from(&old_path).unwrap_or_default()
 }
 
 pub fn load_from(path: &Path) -> Result<PolicyFile> {

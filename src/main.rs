@@ -146,6 +146,8 @@ enum Commands {
     },
     /// Check PATH order, shim health, cache, and model state
     Doctor,
+    /// Move .primer-ignore / .primer-policy.toml into .primer/ and update .gitignore
+    Migrate,
     /// Emit shell completion script
     Completions {
         /// Shell to generate completions for
@@ -369,23 +371,61 @@ async fn main() -> Result<()> {
                         packages.len(),
                         kind,
                     );
+                    // Stream queries in parallel via JoinSet — print each result
+                    // as it resolves, then show the consolidated sorted summary.
+                    let total = packages.len();
+                    let mut join_set: tokio::task::JoinSet<(
+                        String,
+                        String,
+                        anyhow::Result<Vec<osv::Vulnerability>>,
+                    )> = tokio::task::JoinSet::new();
+                    for (name, version) in packages {
+                        let eco_owned = eco.to_string();
+                        join_set.spawn(async move {
+                            let result =
+                                osv::query(&name, &eco_owned, version.as_deref(), verbose).await;
+                            (name, eco_owned, result)
+                        });
+                    }
+
                     let mut findings: Vec<prompt::AuditFinding> = Vec::new();
-                    for (name, version) in &packages {
-                        match osv::query(name, eco, version.as_deref(), verbose).await {
-                            Ok(vulns) if vulns.is_empty() => {}
-                            Ok(vulns) => {
-                                if ai {
-                                    show_ai_summary(&vulns);
+                    let mut completed = 0usize;
+                    while let Some(res) = join_set.join_next().await {
+                        completed += 1;
+                        match res {
+                            Ok((name, ecosystem_str, Ok(vulns))) => {
+                                let count = vulns.len();
+                                if count == 0 {
+                                    println!("[{}/{}] {} — clean", completed, total, name);
+                                } else {
+                                    println!(
+                                        "[{}/{}] {} — {} {}",
+                                        completed,
+                                        total,
+                                        name,
+                                        count,
+                                        if count == 1 { "finding" } else { "findings" }
+                                    );
+                                    if ai {
+                                        show_ai_summary(&vulns);
+                                    }
+                                    findings.push(prompt::AuditFinding {
+                                        package: name,
+                                        ecosystem: ecosystem_str,
+                                        vulns,
+                                    });
                                 }
-                                findings.push(prompt::AuditFinding {
-                                    package: name.clone(),
-                                    ecosystem: eco.to_string(),
-                                    vulns,
-                                });
                             }
-                            Err(e) => eprintln!("  ⚠ {} scan skipped: {}", name, e),
+                            Ok((name, _, Err(e))) => {
+                                eprintln!(
+                                    "  ⚠ [{}/{}] {} scan skipped: {}",
+                                    completed, total, name, e
+                                );
+                            }
+                            Err(e) => eprintln!("  ⚠ task error: {}", e),
                         }
                     }
+
                     if format.as_deref() == Some("sarif") {
                         let sarif = output::sarif::build(&findings, filename);
                         let json_str = serde_json::to_string_pretty(&sarif).unwrap_or_default();
@@ -402,7 +442,9 @@ async fn main() -> Result<()> {
                             std::process::exit(1);
                         }
                     } else {
-                        if let prompt::Decision::Abort = prompt::audit_summary(&findings) {
+                        let decision = prompt::audit_summary(&findings);
+                        prompt::audit_navigate(&findings);
+                        if let prompt::Decision::Abort = decision {
                             std::process::exit(1);
                         }
                         println!("✓ Scan complete.");
@@ -497,7 +539,13 @@ async fn main() -> Result<()> {
             match command {
                 PolicyCommands::List => policy::list_rules(&policy),
                 PolicyCommands::Check => {
-                    let path = std::env::current_dir()?.join(".primer-policy.toml");
+                    let cwd = std::env::current_dir()?;
+                    let new_path = cwd.join(".primer").join("policy.toml");
+                    let path = if new_path.exists() {
+                        new_path
+                    } else {
+                        cwd.join(".primer-policy.toml")
+                    };
                     policy::check_file(&path)?;
                 }
             }
@@ -513,6 +561,8 @@ async fn main() -> Result<()> {
         } => cli::sbom::run(file, output, &format, no_scan).await?,
 
         Commands::Uninit { purge } => cli::uninit::run(purge)?,
+
+        Commands::Migrate => cli::migrate::run()?,
 
         Commands::Completions { shell } => {
             let mut cmd = Cli::command();

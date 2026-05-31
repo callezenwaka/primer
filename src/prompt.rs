@@ -260,7 +260,8 @@ fn interactive_decision(
     // Show top-level CVE list sorted CRITICAL → HIGH → MEDIUM → LOW → UNSCORED.
     let sorted = sorted_vulns(vulns);
     for v in sorted.iter().take(5) {
-        eprintln!("  [{}] {}", color_severity(v.severity_label()), v.id);
+        let id_link = crate::output::hyperlink::cve_link(&v.id);
+        eprintln!("  [{}] {}", color_severity(v.severity_label()), id_link);
         if let Some(s) = &v.summary {
             eprintln!("       {}", s.dimmed());
         }
@@ -416,11 +417,12 @@ pub fn audit_summary(findings: &[AuditFinding]) -> Decision {
             } else {
                 String::new()
             };
+            let id_link = crate::output::hyperlink::cve_link(&v.id);
             eprintln!(
                 "  [{}]{} {}",
                 color_severity(v.severity_label()),
                 blocking_marker,
-                v.id.bold(),
+                id_link.bold(),
             );
             if let Some(s) = &v.summary {
                 eprintln!("       {}", s.dimmed());
@@ -443,6 +445,73 @@ pub fn audit_summary(findings: &[AuditFinding]) -> Decision {
         Decision::Abort
     } else {
         Decision::Proceed
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Numbered finding navigation (scan --file, TTY + non-CI only)
+// ---------------------------------------------------------------------------
+
+/// After `audit_summary`, offer a numbered pick-list so the user can drill into
+/// individual findings.  Skipped silently in CI or when stdin is not a TTY.
+pub fn audit_navigate(findings: &[AuditFinding]) {
+    use std::io::IsTerminal;
+    if is_ci() || !std::io::stdin().is_terminal() {
+        return;
+    }
+    let with_vulns: Vec<&AuditFinding> = findings.iter().filter(|f| !f.vulns.is_empty()).collect();
+    if with_vulns.is_empty() {
+        return;
+    }
+
+    eprintln!();
+    eprintln!("  Findings:");
+    for (i, f) in with_vulns.iter().enumerate() {
+        eprintln!(
+            "  [{}] {} — {} {}",
+            i + 1,
+            f.package,
+            f.vulns.len(),
+            if f.vulns.len() == 1 {
+                "vulnerability"
+            } else {
+                "vulnerabilities"
+            }
+        );
+    }
+    eprintln!();
+
+    loop {
+        eprint!("  Enter number for details, [a]ll, [q]uit: ");
+        let mut input = String::new();
+        if std::io::stdin().read_line(&mut input).is_err() {
+            break;
+        }
+        let input = input.trim();
+        match input {
+            "q" | "Q" | "" => break,
+            "a" | "A" => {
+                for f in &with_vulns {
+                    print_findings(&f.package, &f.ecosystem, &f.vulns);
+                }
+                break;
+            }
+            s => {
+                if let Ok(n) = s.parse::<usize>() {
+                    if n >= 1 && n <= with_vulns.len() {
+                        let f = with_vulns[n - 1];
+                        print_findings(&f.package, &f.ecosystem, &f.vulns);
+                    } else {
+                        eprintln!(
+                            "  Invalid number. Enter 1–{}, [a]ll, or [q]uit.",
+                            with_vulns.len()
+                        );
+                    }
+                } else {
+                    eprintln!("  Unknown input. Enter a number, [a]ll, or [q]uit.");
+                }
+            }
+        }
     }
 }
 
@@ -500,9 +569,15 @@ pub fn report_post_install(package: &str, ecosystem: &str, vulns: &[Vulnerabilit
 // ---------------------------------------------------------------------------
 
 fn print_findings(package: &str, ecosystem: &str, vulns: &[Vulnerability]) {
-    eprintln!("  Security findings for {}:\n", package.bold());
+    let pkg_display = crate::output::hyperlink::package_link(package, ecosystem);
+    eprintln!("  Security findings for {}:\n", pkg_display.bold());
     for v in sorted_vulns(vulns) {
-        eprintln!("  [{}] {}", color_severity(v.severity_label()), v.id.bold());
+        let id_link = crate::output::hyperlink::cve_link(&v.id);
+        eprintln!(
+            "  [{}] {}",
+            color_severity(v.severity_label()),
+            id_link.bold()
+        );
         if let Some(s) = &v.summary {
             eprintln!("       {}", s);
         }
@@ -641,5 +716,36 @@ mod tests {
     fn is_blocking_at_low_threshold() {
         assert!(is_blocking_at("LOW", "low"));
         assert!(is_blocking_at("MEDIUM", "low"));
+    }
+
+    #[test]
+    fn audit_navigate_skips_when_no_findings() {
+        // audit_navigate should return immediately (no panic, no I/O) when
+        // all findings have empty vuln lists — in CI stdin is never a TTY.
+        let findings: Vec<AuditFinding> = vec![AuditFinding {
+            package: "clean-pkg".into(),
+            ecosystem: "npm".into(),
+            vulns: vec![],
+        }];
+        audit_navigate(&findings); // must not block or panic
+    }
+
+    #[test]
+    fn audit_navigate_skips_in_ci_environment() {
+        // In the test environment stdin is not a TTY, so audit_navigate must
+        // return without attempting to read input.
+        let vulns = vec![Vulnerability {
+            id: "GHSA-0001".into(),
+            summary: Some("test".into()),
+            cvss_vector: None,
+            severity: Some("HIGH".into()),
+            fixed_version: None,
+        }];
+        let findings = vec![AuditFinding {
+            package: "vuln-pkg".into(),
+            ecosystem: "npm".into(),
+            vulns,
+        }];
+        audit_navigate(&findings); // must not block
     }
 }

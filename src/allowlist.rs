@@ -3,7 +3,8 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 
-const IGNORE_FILE: &str = ".primer-ignore";
+const IGNORE_FILE_NEW: &str = ".primer/ignore";
+const IGNORE_FILE_OLD: &str = ".primer-ignore";
 
 /// Check if a package is in the nearest .primer-ignore file.
 /// Walks up from the current directory, like .gitignore lookup.
@@ -14,9 +15,10 @@ pub fn is_allowed(package: &str, ecosystem: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// Add a package to .primer-ignore in the current directory.
+/// Add a package to the allow-list.
+/// Writes to `.primer/ignore` when `.primer/` exists, otherwise `.primer-ignore`.
 pub fn add(package: &str, ecosystem: Option<&str>) -> Result<()> {
-    let path = PathBuf::from(IGNORE_FILE);
+    let path = preferred_ignore_file();
     let entry = match ecosystem {
         Some(eco) => format!("{}:{}\n", eco.to_lowercase(), package),
         None => format!("{}\n", package),
@@ -24,18 +26,23 @@ pub fn add(package: &str, ecosystem: Option<&str>) -> Result<()> {
 
     let existing = fs::read_to_string(&path).unwrap_or_default();
     if existing.lines().any(|l| l.trim() == entry.trim()) {
-        println!("  · {} is already in {}", package, IGNORE_FILE);
+        println!("  · {} is already in {}", package, path.display());
         return Ok(());
     }
 
+    if let Some(parent) = path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        fs::create_dir_all(parent)?;
+    }
     fs::write(&path, format!("{}{}", existing, entry))?;
-    println!("  ✓ Added '{}' to {}", entry.trim(), IGNORE_FILE);
+    println!("  ✓ Added '{}' to {}", entry.trim(), path.display());
     Ok(())
 }
 
-/// Remove a package from .primer-ignore in the current directory.
+/// Remove a package from the allow-list (whichever file is active).
 pub fn remove(package: &str, ecosystem: Option<&str>) -> Result<()> {
-    let path = PathBuf::from(IGNORE_FILE);
+    let path = preferred_ignore_file();
     let existing = fs::read_to_string(&path).unwrap_or_default();
     let target = match ecosystem {
         Some(eco) => format!("{}:{}", eco.to_lowercase(), package),
@@ -43,18 +50,21 @@ pub fn remove(package: &str, ecosystem: Option<&str>) -> Result<()> {
     };
     let (filtered, found) = filter_entry(&existing, &target);
     if !found {
-        println!("  · '{}' was not in {}", target, IGNORE_FILE);
+        println!("  · '{}' was not in {}", target, path.display());
         return Ok(());
     }
     fs::write(&path, filtered)?;
-    println!("  ✓ Removed '{}' from {}", target, IGNORE_FILE);
+    println!("  ✓ Removed '{}' from {}", target, path.display());
     Ok(())
 }
 
 /// Print all entries in the nearest .primer-ignore file.
 pub fn list() -> Result<()> {
     match find_ignore_file() {
-        None => println!("No {} found.", IGNORE_FILE),
+        None => println!(
+            "No allow-list file found ({} or .primer/ignore).",
+            IGNORE_FILE_OLD
+        ),
         Some(path) => {
             let contents = fs::read_to_string(&path)?;
             let entries = visible_entries(&contents);
@@ -97,13 +107,32 @@ fn visible_entries(contents: &str) -> Vec<&str> {
 fn find_ignore_file() -> Option<PathBuf> {
     let mut dir = std::env::current_dir().ok()?;
     loop {
-        let candidate = dir.join(IGNORE_FILE);
-        if candidate.exists() {
-            return Some(candidate);
+        // .primer/ignore takes priority over .primer-ignore.
+        let new_path = dir.join(".primer").join("ignore");
+        if new_path.exists() {
+            return Some(new_path);
+        }
+        let old_path = dir.join(IGNORE_FILE_OLD);
+        if old_path.exists() {
+            eprintln!(
+                "⚠  {} is deprecated; run `primer migrate` to move it to {}",
+                IGNORE_FILE_OLD, IGNORE_FILE_NEW
+            );
+            return Some(old_path);
         }
         if !dir.pop() {
             return None;
         }
+    }
+}
+
+/// Returns the path to write new allow-list entries to.
+/// Prefers `.primer/ignore` when `.primer/` already exists, else `.primer-ignore`.
+fn preferred_ignore_file() -> PathBuf {
+    if PathBuf::from(".primer").is_dir() {
+        PathBuf::from(".primer").join("ignore")
+    } else {
+        PathBuf::from(IGNORE_FILE_OLD)
     }
 }
 

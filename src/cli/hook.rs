@@ -50,6 +50,14 @@ pub fn install() -> Result<()> {
 // ---------------------------------------------------------------------------
 
 pub async fn check() -> Result<()> {
+    // Warn and block if .primer/ policy files are gitignored (they must be committed).
+    if check_primer_files_gitignored()? {
+        bail!(
+            "primer policy files are gitignored and will not apply in CI. \
+            Update .gitignore or run `primer migrate`."
+        );
+    }
+
     let new_packages = collect_new_packages()?;
 
     if new_packages.is_empty() {
@@ -82,6 +90,35 @@ pub async fn check() -> Result<()> {
     }
 
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// .primer/ gitignore check
+// ---------------------------------------------------------------------------
+
+/// Returns true (and prints warnings) if any .primer/ policy files are gitignored.
+/// Only checks when .primer/ directory exists.
+fn check_primer_files_gitignored() -> Result<bool> {
+    if !std::path::Path::new(".primer").is_dir() {
+        return Ok(false);
+    }
+    let files = [".primer/policy.toml", ".primer/ignore"];
+    let mut any_ignored = false;
+    for file in &files {
+        let result = std::process::Command::new("git")
+            .args(["check-ignore", "-v", file])
+            .output();
+        if let Ok(out) = result
+            && out.status.success()
+        {
+            eprintln!(
+                "primer: {} is gitignored — policy will not apply in CI.",
+                file
+            );
+            any_ignored = true;
+        }
+    }
+    Ok(any_ignored)
 }
 
 // ---------------------------------------------------------------------------

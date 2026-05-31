@@ -175,9 +175,12 @@ Watches: `requirements.txt`, `pyproject.toml`, `package.json`, `go.mod`, `Cargo.
 
 ### Policy file
 
-`.primer-policy.toml` is committed to the repo and enforced automatically on every developer machine and in CI — no flags required. It is separate from `~/.primer/config.toml` (machine-wide settings).
+`.primer/policy.toml` is committed to the repo and enforced automatically on every developer machine and in CI — no flags required. It is separate from `~/.primer/config.toml` (machine-wide settings).
+
+> **Legacy:** If you have a `.primer-policy.toml` in the project root, primer falls back to it with a deprecation warning. Run `primer migrate` to move it to `.primer/policy.toml`.
 
 ```toml
+# .primer/policy.toml
 [policy]
 threshold = "high"          # optional global override for this repo
 
@@ -260,11 +263,12 @@ primer init           # create shims, update PATH
 primer uninit         # remove shims, strip PATH entry
 primer uninit --purge # also delete cache and model files
 primer doctor         # check PATH order, shim health, cache state, model state
+primer migrate        # move .primer-ignore / .primer-policy.toml into .primer/
 ```
 
 ### Allow-list
 
-Add a package to `.primer-ignore` in the project root to skip the scan without `--force`:
+Add a package to `.primer/ignore` (or `.primer-ignore` for legacy repos) to skip the scan without `--force`:
 
 ```sh
 primer allow add pillow

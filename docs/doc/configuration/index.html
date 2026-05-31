@@ -142,6 +142,20 @@ backend   = "local"
 model     = "/Users/you/.primer/models/smollm2.gguf"
 tokenizer = "/Users/you/.primer/models/tokenizer.json"</code></pre>
 
+    <h2 id="primer-dir">.primer/ project config directory</h2>
+    <p>primer looks for project-level files in <code>.primer/</code> first, then falls back to legacy root-level filenames with a deprecation warning:</p>
+    <table>
+      <thead><tr><th>New path</th><th>Legacy fallback</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>.primer/policy.toml</code></td><td><code>.primer-policy.toml</code></td><td>Commit to repo; must not be gitignored</td></tr>
+        <tr><td><code>.primer/ignore</code></td><td><code>.primer-ignore</code></td><td>Commit to repo; must not be gitignored</td></tr>
+        <tr><td><code>.primer/report.json</code></td><td><code>primer-report.json</code></td><td>Generated output; add to <code>.gitignore</code></td></tr>
+      </tbody>
+    </table>
+    <p>Run <code>primer migrate</code> once per repository to move legacy files and update <code>.gitignore</code> automatically.</p>
+    <pre><code>primer migrate</code></pre>
+    <p><code>primer doctor</code> warns if <code>.primer/</code> is listed in <code>.gitignore</code>. <code>primer hook check</code> exits 1 if <code>.primer/policy.toml</code> or <code>.primer/ignore</code> are gitignored.</p>
+
     <h2>Diagnostics</h2>
     <pre><code>primer doctor      # shows active threshold, intercept-restore status, model path</code></pre>
 

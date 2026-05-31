@@ -203,21 +203,32 @@ fn check_policy() {
     println!("Policy");
     println!("------");
 
-    let path = std::env::current_dir()
-        .unwrap_or_default()
-        .join(".primer-policy.toml");
+    let cwd = std::env::current_dir().unwrap_or_default();
 
-    if !path.exists() {
-        println!("  · No .primer-policy.toml in current directory");
-        println!("    create one to enforce per-project rules (deny, ignore, override)");
+    // Resolve path: prefer .primer/policy.toml over .primer-policy.toml.
+    let new_path = cwd.join(".primer").join("policy.toml");
+    let old_path = cwd.join(".primer-policy.toml");
+    let (path, label) = if new_path.exists() {
+        (new_path, ".primer/policy.toml")
+    } else if old_path.exists() {
+        (
+            old_path,
+            ".primer-policy.toml (deprecated — run `primer migrate`)",
+        )
+    } else {
+        println!("  · No policy file found");
+        println!(
+            "    create .primer/policy.toml to enforce per-project rules (deny, ignore, override)"
+        );
+        // Still check whether .primer/ itself is accidentally gitignored.
+        check_primer_dir_gitignored(&cwd);
         return;
-    }
+    };
 
     match crate::policy::load_from(&path) {
-        Err(e) => println!("  ✗ .primer-policy.toml parse error: {}", e),
+        Err(e) => println!("  ✗ {} parse error: {}", label, e),
         Ok(policy) => {
             let today = std::env::var("__PRIMER_TODAY_OVERRIDE").unwrap_or_else(|_| {
-                // Reuse today logic via a quick inline computation.
                 use std::time::{SystemTime, UNIX_EPOCH};
                 let secs = SystemTime::now()
                     .duration_since(UNIX_EPOCH)
@@ -238,7 +249,7 @@ fn check_policy() {
                 .count();
             let active_ignore = policy.ignore.len() - expired;
 
-            println!("  ✓ .primer-policy.toml found");
+            println!("  ✓ {} found", label);
             if let Some(t) = &policy.policy.threshold {
                 println!("    threshold:       {}", t);
             }
@@ -255,6 +266,27 @@ fn check_policy() {
                 );
             }
         }
+    }
+
+    check_primer_dir_gitignored(&cwd);
+}
+
+fn check_primer_dir_gitignored(cwd: &std::path::Path) {
+    let primer_dir = cwd.join(".primer");
+    if !primer_dir.is_dir() {
+        return;
+    }
+    let ignored = std::process::Command::new("git")
+        .args(["check-ignore", "-q", ".primer"])
+        .current_dir(cwd)
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    if ignored {
+        println!(
+            "  ⚠  .primer/ is listed in .gitignore — policy files will not be committed or \
+            shared with CI. Run `primer migrate` to fix."
+        );
     }
 }
 
