@@ -156,6 +156,25 @@ tokenizer = "/Users/you/.primer/models/tokenizer.json"</code></pre>
     <pre><code>primer migrate</code></pre>
     <p><code>primer doctor</code> warns if <code>.primer/</code> is listed in <code>.gitignore</code>. <code>primer hook check</code> exits 1 if <code>.primer/policy.toml</code> or <code>.primer/ignore</code> are gitignored.</p>
 
+    <h2 id="ci-artifacts">CI artifact integration</h2>
+    <p>Upload both the JSON report and the generated HTML as workflow artifacts so findings are always browseable from the Actions run:</p>
+    <pre><code>- name: Scan dependencies
+  uses: barestripehq/primer-action@v1
+
+- name: Upload security report
+  if: always()
+  uses: actions/upload-artifact@v4
+  with:
+    name: primer-report
+    path: |
+      .primer/report.json
+      primer-report.html</code></pre>
+    <p>Generate the HTML artifact in CI with <code>primer open</code> after the scan step:</p>
+    <pre><code>- name: Generate HTML report
+  if: always()
+  run: primer open .primer/report.json</code></pre>
+    <p>The HTML file is self-contained — no server required. Share it directly from the artifact zip.</p>
+
     <h2>Diagnostics</h2>
     <pre><code>primer doctor      # shows active threshold, intercept-restore status, model path</code></pre>
 

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>primer — Security Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #0d1117; color: #e6edf3; min-height: 100vh; }
+  header { padding: 24px 32px 0; border-bottom: 1px solid #21262d; }
+  header h1 { font-size: 18px; font-weight: 600; color: #f0f6fc; }
+  header p  { font-size: 13px; color: #8b949e; margin-top: 4px; padding-bottom: 16px; }
+  .banner { display: flex; gap: 16px; padding: 16px 32px; background: #161b22; border-bottom: 1px solid #21262d; flex-wrap: wrap; }
+  .stat { background: #21262d; border-radius: 6px; padding: 10px 18px; text-align: center; min-width: 100px; }
+  .stat .num { font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat .label { font-size: 11px; color: #8b949e; margin-top: 4px; text-transform: uppercase; letter-spacing: .05em; }
+  .num.blocking   { color: #f85149; }
+  .num.vulnerable { color: #d29922; }
+  .num.clean      { color: #3fb950; }
+  .controls { padding: 12px 32px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .controls input { background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; padding: 6px 12px; font-size: 13px; width: 280px; outline: none; }
+  .controls input:focus { border-color: #58a6ff; }
+  .controls select { background: #161b22; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; padding: 6px 12px; font-size: 13px; outline: none; cursor: pointer; }
+  .controls select:focus { border-color: #58a6ff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table-wrap { overflow-x: auto; padding: 0 32px 32px; }
+  thead th { text-align: left; padding: 8px 12px; color: #8b949e; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #21262d; cursor: pointer; user-select: none; white-space: nowrap; }
+  thead th:hover { color: #e6edf3; }
+  thead th .sort-arrow { margin-left: 4px; opacity: .4; }
+  thead th.sorted .sort-arrow { opacity: 1; color: #58a6ff; }
+  tbody tr { border-bottom: 1px solid #21262d; transition: background .1s; }
+  tbody tr:hover { background: #161b22; }
+  tbody td { padding: 9px 12px; vertical-align: middle; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+  .badge.CRITICAL { background: #3d0e10; color: #f85149; }
+  .badge.HIGH     { background: #2d1d03; color: #e3b341; }
+  .badge.MEDIUM   { background: #1c2433; color: #58a6ff; }
+  .badge.LOW      { background: #1a2b1a; color: #3fb950; }
+  .badge.UNSCORED { background: #21262d; color: #8b949e; }
+  a { color: #58a6ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .copy-btn { background: #21262d; border: 1px solid #30363d; border-radius: 4px; color: #8b949e; cursor: pointer; font-size: 11px; padding: 3px 8px; transition: background .15s, color .15s; }
+  .copy-btn:hover { background: #30363d; color: #e6edf3; }
+  .copy-btn.copied { background: #1a2b1a; color: #3fb950; border-color: #3fb950; }
+  .fix-cell { display: flex; align-items: center; gap: 6px; }
+  code { font-family: monospace; font-size: 12px; color: #79c0ff; }
+  .no-results { text-align: center; padding: 48px; color: #8b949e; }
+  .ecosystem { color: #8b949e; font-size: 12px; }
+  .summary-text { font-size: 12px; color: #8b949e; padding: 2px 32px 8px; }
+</style>
+</head>
+<body>
+<script>
+/* injected by primer */ const REPORT = __REPORT_JSON__;
+</script>
+<header>
+  <h1>primer — Security Report</h1>
+  <p id="meta"></p>
+</header>
+<div class="banner" id="banner"></div>
+<div class="controls">
+  <input id="filter" type="text" placeholder="Filter by package or CVE ID…" oninput="render()">
+  <select id="sev-filter" onchange="render()">
+    <option value="">All severities</option>
+    <option value="CRITICAL">Critical</option>
+    <option value="HIGH">High</option>
+    <option value="MEDIUM">Medium</option>
+    <option value="LOW">Low</option>
+    <option value="UNSCORED">Unscored</option>
+  </select>
+</div>
+<p class="summary-text" id="row-count"></p>
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th onclick="sort('package')">Package <span class="sort-arrow">↕</span></th>
+      <th onclick="sort('ecosystem')">Ecosystem <span class="sort-arrow">↕</span></th>
+      <th onclick="sort('id')">CVE / ID <span class="sort-arrow">↕</span></th>
+      <th onclick="sort('severity')">Severity <span class="sort-arrow">↕</span></th>
+      <th>Summary</th>
+      <th>Fix command</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+</div>
+<script>
+(function () {
+  // Flatten report into rows
+  var rows = [];
+  (REPORT.packages || [REPORT]).forEach(function (pkg) {
+    (pkg.findings || []).forEach(function (f) {
+      rows.push({
+        package:   pkg.package   || pkg.name || '',
+        ecosystem: pkg.ecosystem || '',
+        id:        f.id          || '',
+        severity:  f.severity    || 'UNSCORED',
+        summary:   f.summary     || '',
+        fix:       fixCmd(pkg.ecosystem, pkg.package || pkg.name || '', f),
+      });
+    });
+  });
+
+  // Summary stats
+  var pkgs     = REPORT.packages || [REPORT];
+  var total    = pkgs.length;
+  var vulnPkgs = pkgs.filter(function (p) { return (p.findings || []).length > 0; }).length;
+  var blocking = pkgs.filter(function (p) { return p.blocked; }).length;
+
+  document.getElementById('meta').textContent =
+    'Generated ' + new Date().toLocaleString() +
+    ' · ' + rows.length + ' finding' + (rows.length === 1 ? '' : 's') +
+    ' across ' + total + ' package' + (total === 1 ? '' : 's');
+
+  var banner = document.getElementById('banner');
+  banner.innerHTML =
+    stat(total,    'Packages scanned', '')          +
+    stat(vulnPkgs, 'Vulnerable',       'vulnerable') +
+    stat(blocking, 'Blocking',         'blocking');
+
+  var sortKey = 'severity';
+  var sortDir = 1;
+  var sevOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3, UNSCORED: 4 };
+
+  window.sort = function (key) {
+    var ths = document.querySelectorAll('thead th');
+    ths.forEach(function (th) { th.classList.remove('sorted'); });
+    if (sortKey === key) { sortDir *= -1; } else { sortKey = key; sortDir = 1; }
+    var idx = ['package','ecosystem','id','severity','summary','fix'].indexOf(key);
+    if (idx >= 0) { ths[idx].classList.add('sorted'); }
+    render();
+  };
+
+  window.render = function () {
+    var q   = document.getElementById('filter').value.toLowerCase();
+    var sev = document.getElementById('sev-filter').value;
+    var filtered = rows.filter(function (r) {
+      if (sev && r.severity !== sev) return false;
+      if (!q) return true;
+      return r.package.toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+    });
+    filtered.sort(function (a, b) {
+      var av = sortKey === 'severity' ? sevOrder[a[sortKey]] : a[sortKey];
+      var bv = sortKey === 'severity' ? sevOrder[b[sortKey]] : b[sortKey];
+      if (av < bv) return -sortDir;
+      if (av > bv) return  sortDir;
+      return 0;
+    });
+    document.getElementById('row-count').textContent =
+      'Showing ' + filtered.length + ' of ' + rows.length + ' finding' + (rows.length === 1 ? '' : 's');
+    var tbody = document.getElementById('tbody');
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="no-results">No findings match your filter.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filtered.map(function (r) {
+      return '<tr>' +
+        '<td>' + esc(r.package) + '</td>' +
+        '<td><span class="ecosystem">' + esc(r.ecosystem) + '</span></td>' +
+        '<td><a href="https://osv.dev/vulnerability/' + esc(r.id) + '" target="_blank" rel="noopener">' + esc(r.id) + '</a></td>' +
+        '<td><span class="badge ' + esc(r.severity) + '">' + esc(r.severity) + '</span></td>' +
+        '<td>' + esc(r.summary) + '</td>' +
+        '<td>' + (r.fix ? fixCell(r.fix) : '') + '</td>' +
+        '</tr>';
+    }).join('');
+  };
+
+  render();
+
+  function stat(n, label, cls) {
+    return '<div class="stat"><div class="num ' + cls + '">' + n + '</div><div class="label">' + label + '</div></div>';
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fixCmd(eco, pkg, finding) {
+    if (!eco || !pkg) return '';
+    var fixed = finding.fixed_version || '';
+    if (eco === 'PyPI')      return 'pip install "' + pkg + (fixed ? '>=' + fixed : '') + '"';
+    if (eco === 'npm')       return 'npm install '  + pkg + (fixed ? '@'  + fixed : '');
+    if (eco === 'crates.io') return 'cargo update -p ' + pkg;
+    if (eco === 'Go')        return 'go get ' + pkg + (fixed ? '@' + fixed : '');
+    return '';
+  }
+
+  function fixCell(cmd) {
+    return '<div class="fix-cell"><code>' + esc(cmd) + '</code>' +
+      '<button class="copy-btn" onclick="copyFix(this,' + JSON.stringify(cmd) + ')">copy</button></div>';
+  }
+
+  window.copyFix = function (btn, text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function () { flash(btn); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      flash(btn);
+    }
+  };
+
+  function flash(btn) {
+    btn.textContent = 'copied!'; btn.classList.add('copied');
+    setTimeout(function () { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+  }
+})();
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ pub mod init;
 pub mod mcp;
 pub mod migrate;
 pub mod model;
+pub mod open;
 pub mod sbom;
 pub mod uninit;
 pub mod watch;

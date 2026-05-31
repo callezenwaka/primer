@@ -74,6 +74,7 @@
         <tr><td><code>primer policy list</code></td><td>Show active rules and expiry status from <code>.primer/policy.toml</code> (or <code>.primer-policy.toml</code>)</td></tr>
         <tr><td><code>primer policy check</code></td><td>Validate policy file syntax without running a scan</td></tr>
         <tr><td><code>primer migrate</code></td><td>Move <code>.primer-ignore</code> and <code>.primer-policy.toml</code> into <code>.primer/</code> and update <code>.gitignore</code></td></tr>
+        <tr><td><code>primer open [&lt;path&gt;]</code></td><td>Generate a self-contained HTML report from the most recent <code>report.json</code> and open it in the default browser</td></tr>
         <tr><td><code>primer hook install</code></td><td>Write <code>.git/hooks/pre-commit</code> to block vulnerable package additions</td></tr>
         <tr><td><code>primer hook check</code></td><td>Scan staged manifest changes manually (also called by the hook itself)</td></tr>
         <tr><td><code>primer watch [--directory &lt;path&gt;] [--scan]</code></td><td>Watch manifest files and auto-scan on change. Debounced at 500 ms; exit with <code>Ctrl+C</code></td></tr>
@@ -90,7 +91,7 @@
     <h3>scan</h3>
     <p>Scan a package or manifest file against the OSV vulnerability database.</p>
     <pre><code>primer scan &lt;package&gt; --ecosystem &lt;eco&gt; [--ai] [--force] [--direct-only] [--verbose]
-primer scan --file &lt;manifest&gt;</code></pre>
+primer scan --file &lt;manifest&gt; [--browse]</code></pre>
     <table>
       <thead><tr><th>Flag</th><th>Description</th></tr></thead>
       <tbody>
@@ -100,6 +101,7 @@ primer scan --file &lt;manifest&gt;</code></pre>
         <tr><td><code>--force</code></td><td>Proceed regardless of findings. Bypasses the prompt.</td></tr>
         <tr><td><code>--direct-only</code></td><td>Skip transitive dependency scanning for this run.</td></tr>
         <tr><td><code>--verbose</code></td><td>Show cache hit/miss and fetch source.</td></tr>
+        <tr><td><code>--browse</code></td><td>Generate an HTML report and open it in the default browser after the scan completes. Requires <code>--file</code>.</td></tr>
       </tbody>
     </table>
 
@@ -151,6 +153,12 @@ primer model remove [&lt;name&gt;...] [--all]            # remove one, several, 
     <pre><code>primer policy list    # show active rules and expiry status
 primer policy check   # validate policy file syntax</code></pre>
     <p>Reads <code>.primer/policy.toml</code> (preferred) or <code>.primer-policy.toml</code> in the current directory. See <a href="../configuration/#policy-file">Policy file</a> for the full schema.</p>
+
+    <h3>open</h3>
+    <pre><code>primer open [&lt;path&gt;]</code></pre>
+    <p>Generates a self-contained HTML report from a <code>report.json</code> and opens it in the default browser. No arguments: auto-detects <code>.primer/report.json</code>, then <code>primer-report.json</code>. Pass an explicit path to open any report file.</p>
+    <p>The report is written to a temp file (<code>primer-report.html</code>) before opening — no server required. The HTML file is standalone and can be shared by email or Slack without any dependencies.</p>
+    <p>Exits with an error if no report file can be found, or if the OS cannot locate a browser. Also available as <code>primer scan --file &lt;manifest&gt; --browse</code> to open immediately after a file scan.</p>
 
     <h3>migrate</h3>
     <pre><code>primer migrate</code></pre>

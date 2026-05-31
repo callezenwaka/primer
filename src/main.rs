@@ -75,6 +75,9 @@ enum Commands {
         /// Write output to file instead of stdout — only valid with --format sarif
         #[arg(long, value_name = "FILE", requires = "format")]
         output: Option<std::path::PathBuf>,
+        /// Open an HTML report in the browser after scanning — only valid with --file
+        #[arg(long, requires = "file")]
+        browse: bool,
     },
     /// Generate shims and update PATH
     Init,
@@ -148,6 +151,12 @@ enum Commands {
     Doctor,
     /// Move .primer-ignore / .primer-policy.toml into .primer/ and update .gitignore
     Migrate,
+    /// Open the most recent report in the browser (or a specific report file)
+    Open {
+        /// Path to a specific primer-report.json (default: auto-detected)
+        #[arg(value_name = "PATH")]
+        path: Option<std::path::PathBuf>,
+    },
     /// Emit shell completion script
     Completions {
         /// Shell to generate completions for
@@ -318,6 +327,7 @@ async fn main() -> Result<()> {
             direct_only,
             format,
             output,
+            browse,
         } => {
             // --direct-only flag OR global config key both disable transitive scanning
             let direct_only = direct_only || crate::config::load().unwrap_or_default().direct_only;
@@ -450,6 +460,9 @@ async fn main() -> Result<()> {
                         println!("✓ Scan complete.");
                     }
                 }
+                if browse {
+                    cli::open::run(None)?;
+                }
             } else {
                 // --- single-package scan ---
                 let package = package.expect("package is required without --file");
@@ -563,6 +576,7 @@ async fn main() -> Result<()> {
         Commands::Uninit { purge } => cli::uninit::run(purge)?,
 
         Commands::Migrate => cli::migrate::run()?,
+        Commands::Open { path } => cli::open::run(path.as_deref())?,
 
         Commands::Completions { shell } => {
             let mut cmd = Cli::command();
