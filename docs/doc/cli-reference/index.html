@@ -71,6 +71,8 @@
         <tr><td><code>primer model remove</code></td><td>Interactive select list of all managed models — choose one or "Remove all"</td></tr>
         <tr><td><code>primer model remove &lt;name&gt;...</code></td><td>Remove one or more named models without a prompt</td></tr>
         <tr><td><code>primer model remove --all</code></td><td>Remove all managed model files and clear config (non-interactive)</td></tr>
+        <tr><td><code>primer policy list</code></td><td>Show active rules and expiry status from <code>.primer-policy.toml</code></td></tr>
+        <tr><td><code>primer policy check</code></td><td>Validate <code>.primer-policy.toml</code> syntax without running a scan</td></tr>
         <tr><td><code>primer hook install</code></td><td>Write <code>.git/hooks/pre-commit</code> to block vulnerable package additions</td></tr>
         <tr><td><code>primer hook check</code></td><td>Scan staged manifest changes manually (also called by the hook itself)</td></tr>
         <tr><td><code>primer watch [--directory &lt;path&gt;] [--scan]</code></td><td>Watch manifest files and auto-scan on change. Debounced at 500 ms; exit with <code>Ctrl+C</code></td></tr>
@@ -143,6 +145,11 @@ primer model remove [&lt;name&gt;...] [--all]            # remove one, several, 
         <tr><td><code>primer model set ollama:mistral</code></td><td>Ollama HTTP</td></tr>
       </tbody>
     </table>
+
+    <h3>policy</h3>
+    <pre><code>primer policy list    # show active rules and expiry status
+primer policy check   # validate .primer-policy.toml syntax</code></pre>
+    <p>Reads <code>.primer-policy.toml</code> in the current directory. See <a href="../configuration/#policy-file">Policy file</a> for the full schema.</p>
 
     <h3>hook</h3>
     <pre><code>primer hook install    # write .git/hooks/pre-commit in the current repo

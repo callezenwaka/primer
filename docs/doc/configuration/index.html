@@ -73,6 +73,42 @@ primer config list                          # print all set keys</code></pre>
       </tbody>
     </table>
 
+    <h2 id="policy-file">Policy file</h2>
+    <p><code>.primer-policy.toml</code> is a per-project file committed to the repo. It travels with the codebase and is enforced by every developer machine and CI job automatically — no flags required.</p>
+    <p>It is distinct from <code>~/.primer/config.toml</code> (machine-wide settings) and <code>.primer-ignore</code> (per-package allow-list).</p>
+
+    <h3>Schema</h3>
+    <pre><code>[policy]
+threshold = "high"          # optional global override for this repo
+
+[[deny]]
+package = "event-stream"    # hard block by name regardless of CVE status
+reason  = "supply chain compromise"
+
+[[ignore]]
+cve     = "CVE-2023-1234"
+package = "pillow"          # optional: scope to one package
+expires = "2026-12-31"      # optional YYYY-MM-DD; finding re-activates after this date
+reason  = "Mitigated by WAF"
+
+[[override]]
+package   = "requests"
+threshold = "critical"      # use a stricter or looser threshold for this package</code></pre>
+
+    <h3>Rule evaluation order</h3>
+    <ol>
+      <li><code>[[deny]]</code> — hard block by package name; no CVE required.</li>
+      <li><code>[[ignore]]</code> — suppress a specific CVE. Expired rules re-activate the finding with a warning.</li>
+      <li><code>[[override]]</code> — per-package threshold replaces the global one.</li>
+      <li>Global <code>[policy] threshold</code> or <code>prompt-threshold</code> from <code>config.toml</code>.</li>
+    </ol>
+
+    <h3>Commands</h3>
+    <pre><code>primer policy list    # show all rules and expiry status
+primer policy check   # validate syntax without scanning</code></pre>
+
+    <hr>
+
     <h2>Severity threshold</h2>
     <p>Controls which findings block an install or CI job.</p>
     <table>

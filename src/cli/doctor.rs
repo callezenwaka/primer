@@ -20,6 +20,8 @@ pub fn run() -> Result<()> {
     println!();
     check_config();
     println!();
+    check_policy();
+    println!();
     check_model(&ms_bin);
 
     Ok(())
@@ -153,6 +155,108 @@ fn check_config() {
     } else {
         println!("    run `primer config set prompt-threshold high` to restore default blocking");
     }
+}
+
+// ---------------------------------------------------------------------------
+// Policy
+// ---------------------------------------------------------------------------
+
+fn check_policy() {
+    println!("Policy");
+    println!("------");
+
+    let path = std::env::current_dir()
+        .unwrap_or_default()
+        .join(".primer-policy.toml");
+
+    if !path.exists() {
+        println!("  · No .primer-policy.toml in current directory");
+        println!("    create one to enforce per-project rules (deny, ignore, override)");
+        return;
+    }
+
+    match crate::policy::load_from(&path) {
+        Err(e) => println!("  ✗ .primer-policy.toml parse error: {}", e),
+        Ok(policy) => {
+            let today = std::env::var("__PRIMER_TODAY_OVERRIDE").unwrap_or_else(|_| {
+                // Reuse today logic via a quick inline computation.
+                use std::time::{SystemTime, UNIX_EPOCH};
+                let secs = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .map(|d| d.as_secs())
+                    .unwrap_or(0);
+                format_days(secs / 86400)
+            });
+
+            let expired = policy
+                .ignore
+                .iter()
+                .filter(|r| {
+                    r.expires
+                        .as_deref()
+                        .map(|e| e < today.as_str())
+                        .unwrap_or(false)
+                })
+                .count();
+            let active_ignore = policy.ignore.len() - expired;
+
+            println!("  ✓ .primer-policy.toml found");
+            if let Some(t) = &policy.policy.threshold {
+                println!("    threshold:       {}", t);
+            }
+            println!("    deny rules:      {}", policy.deny.len());
+            println!(
+                "    ignore rules:    {} active, {} expired",
+                active_ignore, expired
+            );
+            println!("    override rules:  {}", policy.overrides.len());
+            if expired > 0 {
+                println!(
+                    "  ⚠ {} expired ignore rule(s) — run `primer policy list` for details",
+                    expired
+                );
+            }
+        }
+    }
+}
+
+fn format_days(mut days: u64) -> String {
+    let mut year = 1970u32;
+    loop {
+        let dy = if is_leap(year) { 366 } else { 365 };
+        if days < dy {
+            break;
+        }
+        days -= dy;
+        year += 1;
+    }
+    let dim = [
+        31u64,
+        if is_leap(year) { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
+    let mut month = 1u32;
+    for &d in &dim {
+        if days < d {
+            break;
+        }
+        days -= d;
+        month += 1;
+    }
+    format!("{:04}-{:02}-{:02}", year, month, days as u32 + 1)
+}
+
+fn is_leap(year: u32) -> bool {
+    (year.is_multiple_of(4) && !year.is_multiple_of(100)) || year.is_multiple_of(400)
 }
 
 // ---------------------------------------------------------------------------

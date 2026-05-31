@@ -6,6 +6,7 @@ mod engine;
 mod lockfile;
 mod manifest;
 mod output;
+mod policy;
 mod prompt;
 mod report;
 mod shim;
@@ -104,6 +105,11 @@ enum Commands {
     Hook {
         #[command(subcommand)]
         command: HookCommands,
+    },
+    /// Manage per-project vulnerability policy (.primer-policy.toml)
+    Policy {
+        #[command(subcommand)]
+        command: PolicyCommands,
     },
     /// Watch manifest files and auto-scan on change
     Watch {
@@ -233,6 +239,14 @@ enum HookCommands {
     /// Write .git/hooks/pre-commit to block vulnerable package additions
     Install,
     /// Diff staged manifest changes and scan newly added packages (also called by the hook itself)
+    Check,
+}
+
+#[derive(Subcommand)]
+enum PolicyCommands {
+    /// Show active rules and expiry status from .primer-policy.toml
+    List,
+    /// Validate .primer-policy.toml syntax without running a scan
     Check,
 }
 
@@ -458,6 +472,17 @@ async fn main() -> Result<()> {
             HookCommands::Install => cli::hook::install()?,
             HookCommands::Check => cli::hook::check().await?,
         },
+
+        Commands::Policy { command } => {
+            let policy = policy::load();
+            match command {
+                PolicyCommands::List => policy::list_rules(&policy),
+                PolicyCommands::Check => {
+                    let path = std::env::current_dir()?.join(".primer-policy.toml");
+                    policy::check_file(&path)?;
+                }
+            }
+        }
 
         Commands::Mcp => cli::mcp::run().await?,
 

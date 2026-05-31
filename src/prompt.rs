@@ -91,14 +91,39 @@ fn color_severity(label: &str) -> colored::ColoredString {
 /// Evaluate findings and return whether the install should proceed.
 /// Handles force, CI, and interactive modes.
 pub fn evaluate(package: &str, ecosystem: &str, vulns: &[Vulnerability], force: bool) -> Decision {
+    let policy = crate::policy::load();
+    let pd = crate::policy::evaluate(&policy, package, vulns, &effective_threshold());
+
+    for w in &pd.expired_warnings {
+        eprintln!("{}", w.yellow());
+    }
+
+    if pd.denied {
+        if let Some(reason) = &pd.deny_reason {
+            eprintln!(
+                "{} {} is denied by policy: {}",
+                "✗".red().bold(),
+                package.bold(),
+                reason
+            );
+        } else {
+            eprintln!(
+                "{} {} is denied by policy (.primer-policy.toml)",
+                "✗".red().bold(),
+                package.bold()
+            );
+        }
+        return Decision::Abort;
+    }
+
     evaluate_inner(
         package,
         ecosystem,
-        vulns,
+        &pd.filtered_vulns,
         force || force_flag(),
         is_ci(),
         ci_allow_all(),
-        &effective_threshold(),
+        &pd.threshold,
     )
 }
 
@@ -319,7 +344,8 @@ pub struct AuditFinding {
 /// Print a consolidated findings table and return whether any are blocking.
 /// No interactive prompts — used by `primer scan --file`.
 pub fn audit_summary(findings: &[AuditFinding]) -> Decision {
-    let threshold = effective_threshold();
+    let base_threshold = effective_threshold();
+    let policy = crate::policy::load();
     let mut any_blocking = false;
 
     let has_findings = findings.iter().any(|f| !f.vulns.is_empty());
@@ -332,10 +358,42 @@ pub fn audit_summary(findings: &[AuditFinding]) -> Decision {
         if f.vulns.is_empty() {
             continue;
         }
-        let blocking_count = f
-            .vulns
+
+        let pd = crate::policy::evaluate(&policy, &f.package, &f.vulns, &base_threshold);
+
+        for w in &pd.expired_warnings {
+            eprintln!("{}", w.yellow());
+        }
+
+        if pd.denied {
+            any_blocking = true;
+            if let Some(reason) = &pd.deny_reason {
+                eprintln!(
+                    "{} {} is denied by policy: {}",
+                    "✗".red().bold(),
+                    f.package.bold(),
+                    reason
+                );
+            } else {
+                eprintln!(
+                    "{} {} is denied by policy (.primer-policy.toml)",
+                    "✗".red().bold(),
+                    f.package.bold()
+                );
+            }
+            eprintln!();
+            continue;
+        }
+
+        if pd.filtered_vulns.is_empty() {
+            continue;
+        }
+
+        let threshold = &pd.threshold;
+        let blocking_count = pd
+            .filtered_vulns
             .iter()
-            .filter(|v| is_blocking_at(v.severity_label(), &threshold))
+            .filter(|v| is_blocking_at(v.severity_label(), threshold))
             .count();
         if blocking_count > 0 {
             any_blocking = true;
@@ -345,15 +403,15 @@ pub fn audit_summary(findings: &[AuditFinding]) -> Decision {
             "⚠".yellow().bold(),
             f.package.bold(),
             f.ecosystem,
-            f.vulns.len(),
-            if f.vulns.len() == 1 {
+            pd.filtered_vulns.len(),
+            if pd.filtered_vulns.len() == 1 {
                 "vulnerability"
             } else {
                 "vulnerabilities"
             },
         );
-        for v in sorted_vulns(&f.vulns) {
-            let blocking_marker = if is_blocking_at(v.severity_label(), &threshold) {
+        for v in sorted_vulns(&pd.filtered_vulns) {
+            let blocking_marker = if is_blocking_at(v.severity_label(), threshold) {
                 " BLOCKS".red().bold().to_string()
             } else {
                 String::new()

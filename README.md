@@ -166,6 +166,36 @@ primer watch --scan                 # also scan immediately on startup
 
 Watches: `requirements.txt`, `pyproject.toml`, `package.json`, `go.mod`, `Cargo.toml`. Debounced at 500 ms. Exit with `Ctrl+C`.
 
+### Policy file
+
+`.primer-policy.toml` is committed to the repo and enforced automatically on every developer machine and in CI — no flags required. It is separate from `~/.primer/config.toml` (machine-wide settings).
+
+```toml
+[policy]
+threshold = "high"          # optional global override for this repo
+
+[[deny]]
+package = "event-stream"    # hard block by name regardless of CVE status
+reason  = "supply chain compromise"
+
+[[ignore]]
+cve     = "CVE-2023-1234"
+package = "pillow"          # optional: scope to one package
+expires = "2026-12-31"      # YYYY-MM-DD; finding re-activates after this date
+reason  = "Mitigated by WAF"
+
+[[override]]
+package   = "requests"
+threshold = "critical"      # per-package threshold
+```
+
+Evaluation order: `[[deny]]` → `[[ignore]]` (expiry checked) → `[[override]]` → `[policy].threshold`.
+
+```sh
+primer policy list    # show all rules and expiry status
+primer policy check   # validate syntax without scanning
+```
+
 ### Severity threshold
 
 Control which severity level triggers a prompt or CI block:
