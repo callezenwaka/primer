@@ -20,8 +20,12 @@
     </div>
 
     <h2>Install the binary</h2>
-    <p>The installer detects your OS and architecture, downloads the correct binary, and places it at <code>~/.primer/bin/primer</code>.</p>
+    <p>The installer detects your OS and architecture, downloads the correct binary, places it at <code>~/.primer/bin/primer</code>, and adds <code>~/.primer/bin</code> to your shell config automatically.</p>
     <pre><code>curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</code></pre>
+    <p>After the installer completes, reload your PATH before continuing:</p>
+    <pre><code>source ~/.zshenv   # zsh
+source ~/.bashrc   # bash
+# or simply open a new terminal</code></pre>
 
     <h2>Run <code>primer init</code></h2>
     <p>This is the only setup step. It generates shims for every detected package manager and prepends <code>~/.primer/bin</code> to your PATH.</p>

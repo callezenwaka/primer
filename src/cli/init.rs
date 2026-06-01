@@ -13,6 +13,7 @@ pub fn run() -> Result<()> {
     fs::create_dir_all(&ms_bin)
         .with_context(|| format!("could not create {}", ms_bin.display()))?;
 
+    crate::output::logo::print_logo();
     println!("Initialising primer...\n");
 
     // On Windows, copy primer.exe → primer-shim.exe once so .cmd wrappers can call it.

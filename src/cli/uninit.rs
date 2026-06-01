@@ -46,6 +46,8 @@ pub fn run(purge: bool) -> Result<()> {
     remove_path_lines()?;
 
     // Optionally purge cache and models.
+    // Intentionally scoped to named subdirs — never deletes ~/.primer/bin itself,
+    // which holds the primer binary when install-path = "~/.primer/bin".
     if purge {
         let ms_home = ms_bin.parent().unwrap().to_path_buf();
         for subdir in &["cache", "models"] {
