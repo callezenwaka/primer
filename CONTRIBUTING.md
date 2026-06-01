@@ -93,25 +93,25 @@ The pushed tag triggers the GitHub Actions release workflow, which cross-compile
 
 ## Docs
 
-The `docs/` directory is published to `primer.barestripe.com` by Netlify on every push to `main` — no build step.
+The `docs/` directory is bundled into the `primer-app` Docker image and served by Cloud Run at `primer.barestripe.com` — no build step. A push to `main` that touches `app/**`, `cli/**`, `Dockerfile`, or `Cargo.toml`/`Cargo.lock` triggers the deploy workflow.
 
 ### Structure
 
 | Path | URL | Purpose |
 |------|-----|---------|
 | `docs/index.html` | `/` | Marketing landing page |
-| `docs/doc/index/` | `/doc/index/` | Docs home (sidebar layout) |
-| `docs/doc/<slug>/` | `/doc/<slug>/` | Individual doc pages |
+| `docs/index/` | `/index/` | Docs home (sidebar layout) |
+| `docs/<slug>/` | `/<slug>/` | Individual doc pages |
 
-Shared files: `docs/doc/components.js` (`<primer-doc-layout>` web component) and `docs/doc/content.css` (typography).
+Shared files: `docs/components.js` (`<primer-doc-layout>` web component) and `docs/content.css` (typography).
 
 ### Local development
 
 ```sh
-# Option 1 — Netlify CLI (mirrors production headers)
-netlify dev                              # serves docs/ at localhost:8888
+# Option 1 — primer-app (matches production exactly)
+DOCS_DIR=docs cargo run -p primer-app   # serves at localhost:8080
 
-# Option 2 — plain HTTP server
+# Option 2 — plain HTTP server (docs only)
 python3 -m http.server 3000 --directory docs
 ```
 
@@ -119,9 +119,9 @@ Do not open HTML files directly via `file://` — relative paths for `components
 
 ### Adding a doc page
 
-1. Create `docs/doc/<slug>/index.html` using `<primer-doc-layout active="<slug>">`.
-2. Add the slug to the `NAV` array in `docs/doc/components.js`.
-3. Add a nav card to `docs/doc/index/index.html` if it belongs in the overview grid.
+1. Create `docs/<slug>/index.html` using `<primer-doc-layout active="<slug>">`.
+2. Add the slug to the `NAV` array in `docs/components.js`.
+3. Add a nav card to `docs/index/index.html` if it belongs in the overview grid.
 
 ## CI
 

@@ -27,10 +27,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # ---------------------------------------------------------------------------
-      # Authenticate to GCP using Workload Identity Federation (no SA key stored
-      # in GitHub). Requires one-time GCP setup — see docs/doc/deployment/.
-      # ---------------------------------------------------------------------------
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
@@ -58,23 +54,18 @@ jobs:
           docker push ${{ env.IMAGE }}:${{ github.sha }}
           docker push ${{ env.IMAGE }}:latest
 
-      # ---------------------------------------------------------------------------
-      # Deploy to Cloud Run. Secrets are read from GCP Secret Manager at runtime —
-      # not baked into the image or passed as plain env vars.
-      # Secret versions are pinned to `latest`; rotate by creating a new version
-      # in Secret Manager and redeploying.
-      # ---------------------------------------------------------------------------
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy primer-app \
             --image ${{ env.IMAGE }}:${{ github.sha }} \
             --region ${{ vars.GCP_REGION }} \
+            --service-account primer-app-sa@${{ vars.GCP_PROJECT }}.iam.gserviceaccount.com \
             --set-secrets APP_ID=primer-app-id:latest \
             --set-secrets APP_PRIVATE_KEY=primer-app-key:latest \
             --set-secrets WEBHOOK_SECRET=primer-webhook-secret:latest \
             --allow-unauthenticated \
             --min-instances 0 \
-            --max-instances 10 \
+            --max-instances 1 \
             --quiet
 
       - name: Print service URL

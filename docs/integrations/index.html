@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Integrations — primer docs</title>
-  <meta name="description" content="Wire primer into your workflow: CI/CD, Git hooks, MCP, SBOM, directory watcher, and shim intercept.">
+  <meta name="description" content="Wire primer into your workflow: GitHub App, CI/CD, Git hooks, MCP, SBOM, directory watcher, and shim intercept.">
   <link rel="icon" href="../favicon.ico" sizes="any">
   <link rel="icon" type="image/svg+xml" href="../primer-favicon.svg">
   <link rel="apple-touch-icon" href="../favicon-180.png">
@@ -40,7 +40,22 @@
 
     <hr>
 
-    <h2>3. CI/CD — GitHub Actions</h2>
+    <h2 id="github-app">3. GitHub App — zero-config webhook scanning</h2>
+    <p>The lowest-friction option. Install the primer GitHub App on a repository — no workflow file,
+       no CLI install, no configuration. On every push and pull request, primer:</p>
+    <ul>
+      <li>Receives a webhook event from GitHub</li>
+      <li>Shallow-clones the repository at the target SHA</li>
+      <li>Runs <code>primer scan</code> against the manifest or lockfile, using any <code>.primer/policy.toml</code> in the repo</li>
+      <li>Posts an in-progress Check Run immediately, then updates it to success or failure</li>
+      <li>Uploads SARIF to the GitHub Security tab</li>
+      <li>Posts a findings summary as a PR comment (on <code>pull_request</code> events)</li>
+    </ul>
+    <p>To opt a repository out, simply uninstall the App from that repo in GitHub Settings.</p>
+
+    <hr>
+
+    <h2>4. CI/CD — GitHub Actions</h2>
     <p>Use the official GitHub Action. It installs primer, scans the manifest, uploads SARIF results to the
        GitHub Security tab, and posts a findings summary as a PR comment — all in one step.</p>
     <pre><code>permissions:
@@ -145,7 +160,7 @@ steps:
 
     <hr>
 
-    <h2>4. Directory Watcher — local dev sessions</h2>
+    <h2>5. Directory Watcher — local dev sessions</h2>
     <p>Runs in the background during a dev session. Re-scans manifest files automatically whenever they change.</p>
     <pre><code>primer watch --directory . --scan</code></pre>
     <p>Watches: <code>requirements.txt</code>, <code>pyproject.toml</code>, <code>package.json</code>, <code>go.mod</code>, <code>Cargo.toml</code>.
@@ -154,7 +169,7 @@ steps:
 
     <hr>
 
-    <h2>5. SBOM Generation</h2>
+    <h2>6. SBOM Generation</h2>
     <p>Generate a Software Bill of Materials from any manifest or lockfile. Useful for compliance, audits, and supply chain reporting.</p>
     <pre><code># CycloneDX v1.5 (default)
 primer sbom --file backend/pyproject.toml --output sbom-backend.json
@@ -168,7 +183,7 @@ primer sbom --file Cargo.toml --no-scan</code></pre>
 
     <hr>
 
-    <h2>6. MCP Server — AI coding agents</h2>
+    <h2>7. MCP Server — AI coding agents</h2>
     <p>Exposes a <code>scan_package</code> tool to any MCP-capable AI agent (Claude Code, Cursor, Cline).
        The agent calls it before suggesting a package install, making the vulnerability check
        part of its reasoning rather than a post-hoc interception.</p>

@@ -374,7 +374,7 @@ steps:
       file: package-lock.json
 ```
 
-See the [Integrations docs](https://primer.barestripe.com/doc/integrations/) for all inputs and examples.
+See the [Integrations docs](https://primer.barestripe.com/integrations/) for all inputs and examples.
 
 ### Other CI systems (CircleCI, GitLab CI, Jenkins)
 
