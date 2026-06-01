@@ -1,64 +1,15 @@
-[package]
-name = "primer"
-version = "0.1.5"
-edition = "2024"
-description = "Pre-install security interceptor for package managers"
-repository = "https://github.com/barestripehq/primer"
-homepage = "https://primer.barestripe.com"
-authors = ["Callis Ezenwaka <callisezenwaka@outlook.com>"]
-license = "MIT"
-readme = "README.md"
-keywords = ["security", "vulnerability", "package-manager", "cve", "osv"]
-categories = ["command-line-utilities", "development-tools"]
-
-[[bin]]
-name = "primer"
-path = "src/main.rs"
-
-[features]
-default = []
-ai    = ["dep:candle-core", "dep:candle-transformers", "dep:tokenizers", "dep:hf-hub"]
-metal = ["ai", "candle-core/metal"]
-cuda  = ["ai", "candle-core/cuda"]
-
-[dependencies]
-clap = { version = "4", features = ["derive"] }
-clap_complete = "4"
-tokio = { version = "1", features = ["full"] }
-reqwest = { version = "0.13", features = ["json"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-anyhow = "1"
-inquire = "0.9"
-colored = "3"
-toml = "1"
-notify = { version = "6", features = ["macos_fsevent"] }
-open = "5"
-
-# AI summary layer — only compiled with --features ai
-candle-core         = { version = "0.10", optional = true }
-candle-transformers = { version = "0.10", optional = true }
-tokenizers          = { version = "0.23", optional = true, default-features = false, features = ["onig"] }
-hf-hub              = { version = "0.5", optional = true, features = ["tokio"] }
-
-[dev-dependencies]
-mockito = "1"
-tempfile = "3"
-tokio = { version = "1", features = ["full"] }
-
-# ---------------------------------------------------------------------------
-# cargo-dist — release distribution
-# ---------------------------------------------------------------------------
+[workspace]
+members = ["cli", "app"]
+default-members = ["cli"]
+resolver = "2"
 
 [profile.dist]
 inherits = "release"
 lto = "thin"
 
-[package.metadata.wix]
-upgrade-guid = "4D80909B-2F24-41C0-BE38-E3F966041FE0"
-path-guid = "50DE02DB-EE37-4A58-A801-B7D303703C58"
-license = false
-eula = false
+# ---------------------------------------------------------------------------
+# cargo-dist — release distribution (CLI only)
+# ---------------------------------------------------------------------------
 
 # Config for 'dist'
 [workspace.metadata.dist]

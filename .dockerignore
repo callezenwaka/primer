@@ -1,0 +1,10 @@
+target/
+.git/
+docs/
+.github/
+*.md
+spec-v1.md
+roadmap-v1.md
+netlify.toml
+release.toml
+wix/
