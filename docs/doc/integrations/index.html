@@ -65,7 +65,7 @@ steps:
         <tr><td><code>upload-sarif</code></td><td>no</td><td><code>true</code></td><td>Upload SARIF results to the GitHub Security tab</td></tr>
         <tr><td><code>comment-pr</code></td><td>no</td><td><code>true</code></td><td>Post a findings summary as a PR comment</td></tr>
         <tr><td><code>fail-on-findings</code></td><td>no</td><td><code>true</code></td><td>Exit 1 when blocking findings are detected</td></tr>
-        <tr><td><code>primer-version</code></td><td>no</td><td><code>latest</code></td><td>Pin a specific primer release tag (e.g. <code>v0.1.4</code>)</td></tr>
+        <tr><td><code>primer-version</code></td><td>no</td><td><code>latest</code></td><td>Pin a specific primer release tag (e.g. <code>v0.1.5</code>)</td></tr>
         <tr><td><code>token</code></td><td>no</td><td><code>github.token</code></td><td>GitHub token for SARIF upload and PR comments</td></tr>
       </tbody>
     </table>
@@ -90,19 +90,19 @@ steps:
 # Stricter threshold
 - uses: barestripehq/primer-action@v1
   with:
-    file: requirements.txt
+    file: pyproject.toml
     threshold: medium
 
 # Scan multiple manifests
 - uses: barestripehq/primer-action@v1
   with:
-    file: backend/requirements.txt
+    file: backend/pyproject.toml
 
 - uses: barestripehq/primer-action@v1
   with:
     file: frontend/package-lock.json</code></pre>
 
-    <p>Platform support: Linux (x86_64, ARM64) and macOS (Intel, Apple Silicon). Windows support is planned.</p>
+    <p>Platform support: Linux (x86_64, ARM64), macOS (Intel, Apple Silicon), and Windows (x86_64).</p>
 
     <h3>Alternative: install the CLI directly</h3>
     <p>For full control over the scan step, or for non-GitHub CI systems (CircleCI, GitLab CI, Jenkins),
@@ -138,7 +138,7 @@ steps:
     <h2>5. SBOM Generation</h2>
     <p>Generate a Software Bill of Materials from any manifest or lockfile. Useful for compliance, audits, and supply chain reporting.</p>
     <pre><code># CycloneDX v1.5 (default)
-primer sbom --file backend/requirements.txt --output sbom-backend.json
+primer sbom --file backend/pyproject.toml --output sbom-backend.json
 
 # SPDX 2.3
 primer sbom --file frontend/package-lock.json --output sbom-frontend.json --format spdx

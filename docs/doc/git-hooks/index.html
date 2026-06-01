@@ -47,6 +47,7 @@
       <li>Scans each new package against OSV (<code>--direct-only</code> for speed).</li>
       <li>Exits <code>1</code> on CRITICAL/HIGH findings, aborting the commit. Exits <code>0</code> on clean.</li>
     </ol>
+    <p>On Rust projects, the hook also runs <code>cargo fmt --check</code> and <code>cargo clippy -- -D warnings</code> before the vulnerability scan. Both must pass for the commit to proceed.</p>
 
     <h2>Monitored files</h2>
     <table>
@@ -88,6 +89,11 @@ PRIMER_FORCE=1 git commit        # equivalent; hook exits 0 regardless of findin
       <p><code>--no-verify</code> bypasses all hooks, not just primer. Use <code>PRIMER_FORCE=1</code> when you
          want to skip only the primer check while letting other hooks run.</p>
     </div>
+
+    <h2>Policy file and gitignore</h2>
+    <p><code>primer hook check</code> also validates that <code>.primer/policy.toml</code> and <code>.primer/ignore</code> are not gitignored. If either file would be excluded by <code>.gitignore</code>, the hook exits <code>1</code> with a warning — these files must be committed so the policy travels with the repo.</p>
+    <pre><code>primer hook check
+# → error: .primer/policy.toml is gitignored — add an exception or remove the rule</code></pre>
 
   </primer-doc-layout>
 </body>

@@ -433,7 +433,7 @@
       <p>Generate a machine-readable inventory of all packages in a manifest or lockfile, enriched with OSV vulnerability data. Outputs CycloneDX v1.5 (default) or SPDX 2.3.</p>
       <div class="code-block">
         <span class="comment"># CycloneDX (default)</span><br>
-        <span class="cmd">primer sbom --file requirements.txt --output sbom.json</span><br>
+        <span class="cmd">primer sbom --file pyproject.toml --output sbom.json</span><br>
         <br>
         <span class="comment"># SPDX</span><br>
         <span class="cmd">primer sbom --file package-lock.json --format spdx --output sbom.json</span>

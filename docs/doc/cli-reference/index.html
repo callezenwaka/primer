@@ -73,7 +73,7 @@
         <tr><td><code>primer model remove --all</code></td><td>Remove all managed model files and clear config (non-interactive)</td></tr>
         <tr><td><code>primer policy list</code></td><td>Show active rules and expiry status from <code>.primer/policy.toml</code> (or <code>.primer-policy.toml</code>)</td></tr>
         <tr><td><code>primer policy check</code></td><td>Validate policy file syntax without running a scan</td></tr>
-        <tr><td><code>primer migrate</code></td><td>Move <code>.primer-ignore</code> and <code>.primer-policy.toml</code> into <code>.primer/</code> and update <code>.gitignore</code></td></tr>
+        <tr><td><code>primer migrate</code></td><td>Move <code>.primer-ignore</code>, <code>.primer-policy.toml</code>, and <code>primer-report.json</code> into <code>.primer/</code> and update <code>.gitignore</code></td></tr>
         <tr><td><code>primer open [&lt;path&gt;]</code></td><td>Generate a self-contained HTML report from the most recent <code>report.json</code> and open it in the default browser</td></tr>
         <tr><td><code>primer hook install</code></td><td>Write <code>.git/hooks/pre-commit</code> to block vulnerable package additions</td></tr>
         <tr><td><code>primer hook check</code></td><td>Scan staged manifest changes manually (also called by the hook itself)</td></tr>
@@ -91,7 +91,7 @@
     <h3>scan</h3>
     <p>Scan a package or manifest file against the OSV vulnerability database.</p>
     <pre><code>primer scan &lt;package&gt; --ecosystem &lt;eco&gt; [--ai] [--force] [--direct-only] [--verbose]
-primer scan --file &lt;manifest&gt; [--browse]</code></pre>
+primer scan --file &lt;manifest&gt; [--format human|sarif] [--output &lt;file&gt;] [--browse]</code></pre>
     <table>
       <thead><tr><th>Flag</th><th>Description</th></tr></thead>
       <tbody>
@@ -102,6 +102,8 @@ primer scan --file &lt;manifest&gt; [--browse]</code></pre>
         <tr><td><code>--direct-only</code></td><td>Skip transitive dependency scanning for this run.</td></tr>
         <tr><td><code>--verbose</code></td><td>Show cache hit/miss and fetch source.</td></tr>
         <tr><td><code>--browse</code></td><td>Generate an HTML report and open it in the default browser after the scan completes. Requires <code>--file</code>.</td></tr>
+        <tr><td><code>--format &lt;fmt&gt;</code></td><td>Output format. <code>human</code> (default) or <code>sarif</code>. Requires <code>--file</code>.</td></tr>
+        <tr><td><code>--output &lt;file&gt;</code></td><td>Write output to a file instead of stdout. With <code>--format sarif</code>, suppresses human output. Requires <code>--file</code>.</td></tr>
       </tbody>
     </table>
 
@@ -114,7 +116,7 @@ primer uninit [--purge]     # remove shims, strip PATH entry</code></pre>
     <h3>doctor / info</h3>
     <pre><code>primer doctor    # full health report
 primer info      # alias for doctor</code></pre>
-    <p>Reports: PATH ordering, resolved shim paths, cache size, active AI model, <code>intercept-restore</code> status, active threshold.</p>
+    <p>Reports: PATH ordering, resolved shim paths, cache size, active AI model, <code>intercept-restore</code> status, active threshold, policy file presence and active/expired rule count. Warns if <code>.primer/</code> is listed in <code>.gitignore</code>.</p>
 
     <h3>allow</h3>
     <p>Manage the per-project allow-list (<code>.primer-ignore</code>). Allowed packages pass through without a prompt.</p>
@@ -168,8 +170,8 @@ primer policy check   # validate policy file syntax</code></pre>
       <li><code>.primer-policy.toml</code> → <code>.primer/policy.toml</code></li>
       <li><code>primer-report.json</code> → <code>.primer/report.json</code></li>
     </ul>
-    <p>Uses <code>git mv</code> inside a git repo (preserves history). Updates <code>.gitignore</code> to reference <code>.primer/report.json</code> instead of <code>primer-report.json</code>. Warns about stale paths found in <code>.github/workflows/</code>.</p>
-    <p><strong>Note:</strong> <code>.primer/policy.toml</code> and <code>.primer/ignore</code> must be committed — they should not appear in <code>.gitignore</code>.</p>
+    <p>Uses <code>git mv</code> inside a git repo to preserve history; plain filesystem move otherwise. Updates <code>.gitignore</code> surgically — replaces <code>primer-report.json</code> with <code>.primer/report.json</code> and never adds <code>.primer/</code> itself. Scans <code>.github/workflows/</code> for artifact paths that reference the old filenames and prints a warning for each one found.</p>
+    <p><strong>Note:</strong> <code>.primer/policy.toml</code> and <code>.primer/ignore</code> must be committed — they should not appear in <code>.gitignore</code>. Run <code>primer doctor</code> after migration to confirm.</p>
 
     <h3>hook</h3>
     <pre><code>primer hook install    # write .git/hooks/pre-commit in the current repo
@@ -196,6 +198,30 @@ primer completions fish
 primer completions powershell</code></pre>
     <p>Emits a shell completion script. Pipe to your shell's completion directory:</p>
     <pre><code>primer completions zsh > ~/.zsh/completions/_primer</code></pre>
+
+    <hr>
+    <h2>Output behaviour during file scans</h2>
+
+    <h3>Streaming results</h3>
+    <p><code>primer scan --file</code> prints each package result as its OSV query resolves — you do not wait for the full scan to complete before seeing findings. A running counter shows progress:</p>
+    <pre><code>[12/48] lodash 4.17.15 — 2 findings
+[13/48] express 4.18.1 — clean
+[14/48] axios 1.3.0   — 1 finding
+...</code></pre>
+    <p>Order is non-deterministic during the scan (queries resolve in parallel). The final consolidated findings table is always sorted CRITICAL → HIGH → MEDIUM → LOW → UNSCORED.</p>
+
+    <h3>Terminal hyperlinks</h3>
+    <p>In terminals that support OSC 8 escape sequences (iTerm2, Warp, Windows Terminal, GNOME Terminal), CVE and GHSA IDs are rendered as clickable links to <code>https://osv.dev/vulnerability/&lt;id&gt;</code>. Package names link to their registry pages (<code>npmjs.com</code>, <code>pypi.org</code>, <code>pkg.go.dev</code>, <code>crates.io</code>). Hyperlinks are automatically disabled when stdout is not a TTY (piped output, CI logs, SARIF mode).</p>
+
+    <h3>Numbered finding navigation</h3>
+    <p>After the audit summary table, <code>primer scan --file</code> offers an interactive navigation prompt when stdin is a TTY:</p>
+    <pre><code>Enter number for details, [a]ll, [q]uit: </code></pre>
+    <p>Type a finding number to expand full CVE details for that entry. <code>a</code> loops through all findings in order. <code>q</code> exits with the summary already printed. This prompt is skipped in CI mode (<code>CI=true</code>) and when stdin is not a TTY.</p>
+
+    <h3>Direct vs transitive findings</h3>
+    <p>When a lockfile is present, findings are grouped:</p>
+    <pre><code>Direct (2) / Transitive (5)</code></pre>
+    <p>Direct findings come from packages explicitly listed in the manifest. Transitive findings come from their resolved dependency tree. Use <code>--direct-only</code> to suppress transitive scanning for lower-noise results. Supported lockfiles: <code>package-lock.json</code>, <code>yarn.lock</code>, <code>pnpm-lock.yaml</code> (Node.js); <code>uv.lock</code>, <code>poetry.lock</code> (Python); <code>go.sum</code> (Go); <code>Cargo.lock</code> (Rust).</p>
 
     <hr>
     <h2>Exit codes</h2>

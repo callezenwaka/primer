@@ -154,6 +154,7 @@ tokenizer = "/Users/you/.primer/models/tokenizer.json"</code></pre>
     </table>
     <p>Run <code>primer migrate</code> once per repository to move legacy files and update <code>.gitignore</code> automatically.</p>
     <pre><code>primer migrate</code></pre>
+    <p>Until you migrate, primer reads the legacy filenames and prints a one-time deprecation warning per file. After migration, the legacy filenames are ignored.</p>
     <p><code>primer doctor</code> warns if <code>.primer/</code> is listed in <code>.gitignore</code>. <code>primer hook check</code> exits 1 if <code>.primer/policy.toml</code> or <code>.primer/ignore</code> are gitignored.</p>
 
     <h2 id="ci-artifacts">CI artifact integration</h2>
