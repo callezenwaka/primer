@@ -4,6 +4,7 @@ mod webhook;
 
 use axum::{Router, routing::post};
 use tokio::net::TcpListener;
+use tower_http::services::ServeDir;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -15,7 +16,11 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let app = Router::new().route("/webhook", post(webhook::handle));
+    let docs_dir = std::env::var("DOCS_DIR").unwrap_or_else(|_| "docs".into());
+
+    let app = Router::new()
+        .route("/webhook", post(webhook::handle))
+        .fallback_service(ServeDir::new(&docs_dir));
 
     // Cloud Run injects PORT; LISTEN_ADDR takes priority for local overrides.
     let addr = std::env::var("LISTEN_ADDR")

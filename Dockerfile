@@ -27,11 +27,13 @@ RUN apt-get update \
 
 COPY --from=builder /build/target/release/primer     /usr/local/bin/primer
 COPY --from=builder /build/target/release/primer-app /usr/local/bin/primer-app
+COPY docs/ /app/docs/
 
 USER primer
 
 # Cloud Run injects PORT; LISTEN_ADDR is the fallback for local runs.
 ENV LISTEN_ADDR=0.0.0.0:8080
+ENV DOCS_DIR=/app/docs
 EXPOSE 8080
 
 CMD ["primer-app"]

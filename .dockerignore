@@ -1,6 +1,5 @@
 target/
 .git/
-docs/
 .github/
 *.md
 spec-v1.md
