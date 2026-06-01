@@ -121,32 +121,8 @@ SARIF uploaded to GitHub Security tab</code></pre>
       </tbody>
     </table>
 
-    <h2>5. SARIF upload and private repositories</h2>
-    <p>The <code>upload-sarif: true</code> default uploads findings to the GitHub Security tab via
-       the Code Scanning API. Whether this works depends on your repository visibility and plan:</p>
-
-    <table>
-      <thead><tr><th>Situation</th><th>Security tab</th><th>PR comment</th><th>Exit code</th></tr></thead>
-      <tbody>
-        <tr><td>Public repository</td><td>✅ Free</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Private repo — GitHub Advanced Security enabled</td><td>✅ Paid add-on</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Private repo — no Advanced Security</td><td>❌ API error</td><td>✅</td><td>✅</td></tr>
-      </tbody>
-    </table>
-
-    <p>If your repository is private and you do not have GitHub Advanced Security, set
-       <code>upload-sarif: 'false'</code> to suppress the upload step. The scan, exit code,
-       and PR comment all continue to work normally — only the Security tab integration is skipped.</p>
-
-    <pre><code>- name: Scan dependencies
-  uses: barestripehq/primer-action@v1
-  with:
-    file: package-lock.json
-    upload-sarif: 'false'   # omit if public or Advanced Security is enabled</code></pre>
-
     <div class="callout">
-      <p><strong>Make the repo public</strong> to get free code scanning. GitHub code scanning is
-         available at no cost for all public repositories regardless of plan.</p>
+      <p><strong>Private repository?</strong> SARIF upload to the Security tab requires GitHub Advanced Security on private repos. If you see an "Advanced Security must be enabled" error, set <code>upload-sarif: 'false'</code> — the scan, exit code, and PR comment continue to work normally. See <a href="../integrations/#sarif-private-repos">SARIF and private repositories</a> for details.</p>
     </div>
 
     <h2>Next steps</h2>

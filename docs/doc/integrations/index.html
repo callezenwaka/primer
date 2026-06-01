@@ -104,6 +104,25 @@ steps:
 
     <p>Platform support: Linux (x86_64, ARM64), macOS (Intel, Apple Silicon), and Windows (x86_64).</p>
 
+    <h3 id="sarif-private-repos">SARIF upload and private repositories</h3>
+    <p>SARIF upload to the GitHub Security tab uses the Code Scanning API, which requires
+       <a href="https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security">GitHub Advanced Security</a>
+       on private repositories. Public repositories get code scanning for free.</p>
+    <table>
+      <thead><tr><th>Repository</th><th>Security tab</th><th>PR comment</th><th>Exit code</th></tr></thead>
+      <tbody>
+        <tr><td>Public</td><td>✅ Free</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Private + GitHub Advanced Security</td><td>✅ Paid add-on</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Private, no Advanced Security</td><td>❌</td><td>✅</td><td>✅</td></tr>
+      </tbody>
+    </table>
+    <p>For private repositories without Advanced Security, set <code>upload-sarif: 'false'</code>.
+       The scan, PR comment, and exit code all work as normal — only the Security tab integration is skipped.</p>
+    <pre><code>- uses: barestripehq/primer-action@v1
+  with:
+    file: package-lock.json
+    upload-sarif: 'false'</code></pre>
+
     <h3>Alternative: install the CLI directly</h3>
     <p>For full control over the scan step, or for non-GitHub CI systems (CircleCI, GitLab CI, Jenkins),
        install primer via the installer script and call the CLI yourself.
