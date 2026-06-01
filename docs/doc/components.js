@@ -1,6 +1,7 @@
 const NAV = [
   { section: 'GETTING STARTED' },
   { slug: 'index',         label: 'Overview',       href: '../index/' },
+  { slug: 'quickstart',    label: 'Quickstart',     href: '../quickstart/' },
   { slug: 'installation',  label: 'Installation',   href: '../installation/' },
   { slug: 'configuration', label: 'Configuration',  href: '../configuration/' },
   { divider: true },

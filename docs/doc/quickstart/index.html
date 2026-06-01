@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quickstart — primer docs</title>
+  <meta name="description" content="Add primer to your GitHub Actions workflow in under five minutes — no local install required.">
+  <link rel="icon" href="../../favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="../../primer-favicon.svg">
+  <link rel="apple-touch-icon" href="../../favicon-180.png">
+  <link rel="stylesheet" href="../content.css">
+  <script src="../components.js" defer></script>
+</head>
+<body>
+  <primer-doc-layout active="quickstart">
+
+    <div class="page-hero">
+      <h1>Quickstart</h1>
+      <p class="subtitle">Protect a repository in under five minutes — no local install required</p>
+      <p>This guide wires <code>barestripehq/primer-action@v1</code> into a GitHub Actions workflow,
+         walks through what happens on a push and on a pull request, and explains the SARIF upload
+         constraints for private repositories.</p>
+    </div>
+
+    <h2>1. Add the workflow</h2>
+    <p>Create <code>.github/workflows/security.yml</code> in your repository:</p>
+    <pre><code>name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  security-events: write   # SARIF upload to GitHub Security tab
+  pull-requests: write     # PR comment
+  actions: read
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Scan dependencies
+        id: primer
+        uses: barestripehq/primer-action@v1
+        with:
+          file: package-lock.json   # adjust to your manifest or lockfile</code></pre>
+
+    <p>Commit and push to <code>main</code>. The scan runs immediately.</p>
+
+    <div class="callout">
+      <p><strong>Supported files:</strong> <code>package-lock.json</code>, <code>pyproject.toml</code>,
+         <code>requirements.txt</code>, <code>Cargo.lock</code>, <code>go.sum</code>, <code>yarn.lock</code>,
+         <code>pnpm-lock.yaml</code>, <code>uv.lock</code>, and more. primer infers the ecosystem from the filename.</p>
+    </div>
+
+    <h2>2. What happens on push</h2>
+    <p>The action downloads the primer binary for the runner platform, scans every package in the
+       lockfile against the OSV database, and streams results as queries resolve:</p>
+    <pre><code>Scanning package-lock.json (npm) — 312 packages [lockfile] …
+[1/312]  express 4.18.2        — clean
+[2/312]  lodash 4.17.20        — 1 finding
+[3/312]  axios 1.3.4           — clean
+...
+[312/312] ws 8.13.0            — clean
+
+SARIF written to primer-results.sarif
+SARIF uploaded to GitHub Security tab</code></pre>
+
+    <p>On a clean scan, the job exits <code>0</code>. On blocking findings (at or above <code>threshold</code>,
+       default <code>high</code>), the job exits <code>1</code> and blocks the merge.</p>
+
+    <h2>3. What happens on a pull request</h2>
+    <p>When the workflow runs on a <code>pull_request</code> event, primer posts a findings summary
+       as a comment on the PR. On a clean scan:</p>
+
+    <pre><code>### primer scan — `package-lock.json`
+
+✅ No vulnerabilities found.</code></pre>
+
+    <p>On a scan with findings:</p>
+
+    <pre><code>### primer scan — `package-lock.json`
+
+| Severity | ID | Description |
+|----------|----|-------------|
+| 🔴 | `GHSA-jchw-25xp-jwwc` | lodash prototype pollution via zipObjectDeep |
+| 🟡 | `GHSA-p6mc-m468-83gw` | lodash ReDoS via toNumber, trim and trimEnd |
+
+> Run `primer scan --file package-lock.json` locally for full details and fix commands.</code></pre>
+
+    <p>If you push another commit to the same PR, primer <strong>updates</strong> the existing comment
+       rather than posting a new one — the PR stays clean.</p>
+
+    <h2>4. Reading the outputs</h2>
+    <p>Reference the action's outputs in downstream steps using the <code>id</code> you set
+       on the primer step:</p>
+    <pre><code>- name: Scan dependencies
+  id: primer
+  uses: barestripehq/primer-action@v1
+  with:
+    file: package-lock.json
+
+- name: Print results
+  run: |
+    echo "Total findings : ${{ steps.primer.outputs.findings-count }}"
+    echo "Blocking       : ${{ steps.primer.outputs.blocking-count }}"
+    echo "SARIF path     : ${{ steps.primer.outputs.sarif-path }}"</code></pre>
+
+    <table>
+      <thead><tr><th>Output</th><th>Example value</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>findings-count</code></td><td><code>3</code></td><td>Total vulnerabilities found across all packages</td></tr>
+        <tr><td><code>blocking-count</code></td><td><code>1</code></td><td>Findings at or above <code>threshold</code></td></tr>
+        <tr><td><code>sarif-path</code></td><td><code>/home/runner/work/…/primer-results.sarif</code></td><td>Absolute path to the generated SARIF file</td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. SARIF upload and private repositories</h2>
+    <p>The <code>upload-sarif: true</code> default uploads findings to the GitHub Security tab via
+       the Code Scanning API. Whether this works depends on your repository visibility and plan:</p>
+
+    <table>
+      <thead><tr><th>Situation</th><th>Security tab</th><th>PR comment</th><th>Exit code</th></tr></thead>
+      <tbody>
+        <tr><td>Public repository</td><td>✅ Free</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Private repo — GitHub Advanced Security enabled</td><td>✅ Paid add-on</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Private repo — no Advanced Security</td><td>❌ API error</td><td>✅</td><td>✅</td></tr>
+      </tbody>
+    </table>
+
+    <p>If your repository is private and you do not have GitHub Advanced Security, set
+       <code>upload-sarif: 'false'</code> to suppress the upload step. The scan, exit code,
+       and PR comment all continue to work normally — only the Security tab integration is skipped.</p>
+
+    <pre><code>- name: Scan dependencies
+  uses: barestripehq/primer-action@v1
+  with:
+    file: package-lock.json
+    upload-sarif: 'false'   # omit if public or Advanced Security is enabled</code></pre>
+
+    <div class="callout">
+      <p><strong>Make the repo public</strong> to get free code scanning. GitHub code scanning is
+         available at no cost for all public repositories regardless of plan.</p>
+    </div>
+
+    <h2>Next steps</h2>
+    <ul>
+      <li><a href="../integrations/">Integrations</a> — scan multiple manifests, audit-only mode, other CI systems</li>
+      <li><a href="../configuration/#policy-file">Policy file</a> — per-project deny rules, ignore with expiry, per-package thresholds</li>
+      <li><a href="../installation/">Installation</a> — add the local shim so <code>npm install</code> and <code>pip install</code> are intercepted on developer machines</li>
+    </ul>
+
+  </primer-doc-layout>
+</body>
+</html>
