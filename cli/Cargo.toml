@@ -7,7 +7,7 @@ repository = "https://github.com/barestripehq/primer"
 homepage = "https://primer.barestripe.com"
 authors = ["Callis Ezenwaka <callisezenwaka@outlook.com>"]
 license = "MIT"
-readme = "README.md"
+readme = "../README.md"
 keywords = ["security", "vulnerability", "package-manager", "cve", "osv"]
 categories = ["command-line-utilities", "development-tools"]
 
