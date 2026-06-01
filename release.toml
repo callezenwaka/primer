@@ -8,5 +8,5 @@ tag = true               # create annotated git tag
 push = true              # push commit + tag to origin
 sign-tag = false         # set to true if you have GPG signing configured
 
-pre-release-commit-message = "chore: release {{version}}"
-tag-message = "Release {{version}}"
+pre-release-commit-message = "chore: release v{version}"
+tag-message = "Release v{version}"
