@@ -9,6 +9,7 @@ on:
       - "Dockerfile"
       - "Cargo.toml"
       - "Cargo.lock"
+  workflow_dispatch:
 
 # One set of permissions needed for Workload Identity Federation.
 permissions:
