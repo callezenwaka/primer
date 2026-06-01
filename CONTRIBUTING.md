@@ -123,6 +123,33 @@ Do not open HTML files directly via `file://` — relative paths for `components
 2. Add the slug to the `NAV` array in `docs/components.js`.
 3. Add a nav card to `docs/index/index.html` if it belongs in the overview grid.
 
+## Local development — primer-app (webhook server)
+
+Set the three required environment variables (obtain values from the project maintainer or register your own GitHub App):
+
+```sh
+export WEBHOOK_SECRET=<secret>
+export APP_ID=<app-id>
+export APP_PRIVATE_KEY=<pem-contents>
+```
+
+Start the server:
+
+```sh
+DOCS_DIR=docs cargo run -p primer-app   # listens on localhost:8080
+```
+
+Forward live GitHub webhook events to the local server using the GitHub CLI:
+
+```sh
+gh webhook forward \
+  --repo=barestripehq/primer \
+  --events=push,pull_request \
+  --url=http://localhost:8080/webhook
+```
+
+GitHub delivers each event to `localhost:8080/webhook` exactly as it would to production. The server verifies the HMAC-SHA256 signature, clones the repo at the target SHA, runs `primer scan`, and posts results back via the GitHub API.
+
 ## CI
 
 Two workflows run on every push to `main` and on pull requests:

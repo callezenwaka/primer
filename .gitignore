@@ -13,6 +13,7 @@ Cargo.lock
 # Local design documents (not part of the shipped project)
 roadmap-v*.md
 spec-v*.md
+dev-*.md
 
 # Runtime-generated files
 *-report.json
