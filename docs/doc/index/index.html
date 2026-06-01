@@ -23,15 +23,12 @@
          Vulnerable ones are blocked with a prompt and a fix command.</p>
     </div>
 
-    <h2>Quick start</h2>
-
-    <h3>1 — Install</h3>
-    <pre><code>curl --proto '=https' --tlsv1.2 -fsSL https://github.com/barestripehq/primer/releases/latest/download/primer-installer.sh | sh</code></pre>
-
-    <h3>2 — Set up shims</h3>
-    <pre><code>primer init</code></pre>
-
-    <p><a href="../installation/">Full installation guide →</a></p>
+    <h2>Get started</h2>
+    <p>New to primer? Two paths:</p>
+    <ul>
+      <li><a href="../installation/">Local install</a> — run primer on your machine; <code>npm install</code>, <code>pip install</code>, and <code>cargo add</code> are intercepted automatically after <code>primer init</code>.</li>
+      <li><a href="../quickstart/">GitHub Actions</a> — add one workflow file and protect a repository in CI without installing anything locally.</li>
+    </ul>
 
     <h2>Supported ecosystems</h2>
     <table>
@@ -54,33 +51,7 @@
       <li><strong>Execute or block</strong> — continue with <code>y</code>, abort with <code>N</code> (exit code 1).</li>
     </ol>
 
-    <h2>Browse the docs</h2>
-    <div class="nav-cards">
-      <a class="nav-card" href="../configuration/">
-        <div class="nav-card-title">Configuration</div>
-        <div class="nav-card-desc">All <code>~/.primer/config.toml</code> keys explained</div>
-      </a>
-      <a class="nav-card" href="../cli-reference/">
-        <div class="nav-card-title">CLI Reference</div>
-        <div class="nav-card-desc">Every command, flag, and exit code</div>
-      </a>
-      <a class="nav-card" href="../integrations/">
-        <div class="nav-card-title">Integrations</div>
-        <div class="nav-card-desc">CI/CD, Git hooks, MCP, SBOM, and more</div>
-      </a>
-      <a class="nav-card" href="../git-hooks/">
-        <div class="nav-card-title">Git Hooks</div>
-        <div class="nav-card-desc">Block commits that add vulnerable packages</div>
-      </a>
-      <a class="nav-card" href="../ai/">
-        <div class="nav-card-title">AI Layer</div>
-        <div class="nav-card-desc">Local SLM summaries, model management, Ollama</div>
-      </a>
-      <a class="nav-card" href="../mcp/">
-        <div class="nav-card-title">MCP Server</div>
-        <div class="nav-card-desc">Expose <code>scan_package</code> to Claude Code and other agents</div>
-      </a>
-    </div>
+    <p>Use the navigation on the left to explore all topics, or visit the <a href="https://primer.barestripe.com">primer homepage</a> for a full overview.</p>
 
   </primer-doc-layout>
 </body>
