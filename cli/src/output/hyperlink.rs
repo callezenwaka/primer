@@ -13,9 +13,16 @@ pub fn hyperlink(text: &str, url: &str) -> String {
     format!("\x1b]8;;{}\x1b\\{}\x1b]8;;\x1b\\", url, text)
 }
 
-/// CVE / GHSA ID → clickable link to osv.dev.
+/// CVE / GHSA ID → OSC 8 hyperlink (for iTerm2/Warp) plus plain URL (for Terminal.app
+/// and any other terminal that auto-detects URLs but ignores OSC 8 escape sequences).
 pub fn cve_link(id: &str) -> String {
-    hyperlink(id, &format!("https://osv.dev/vulnerability/{}", id))
+    let url = format!("https://osv.dev/vulnerability/{}", id);
+    if !is_tty() {
+        return id.to_string();
+    }
+    let linked_id = format!("\x1b]8;;{}\x1b\\{}\x1b]8;;\x1b\\", url, id);
+    // Dim the URL so it is present but doesn't compete with the severity label.
+    format!("{}  \x1b[2m{}\x1b[0m", linked_id, url)
 }
 
 /// Package name → clickable link to the ecosystem's registry page.
